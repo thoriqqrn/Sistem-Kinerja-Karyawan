@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "598881097021",
+    "project_id": "sistem-kinerja-karyawan",
+    "storage_bucket": "sistem-kinerja-karyawan.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598881097021:android:d9899e9e478824f5bb2154",
+        "android_client_info": {
+          "package_name": "com.example.sistem_kinerja"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALdb9nXtfLpWABzoD-nIp1k7tmUUL6Tbo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
