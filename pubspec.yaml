@@ -38,6 +38,11 @@ dependencies:
   firebase_core: ^2.32.0  # Selalu gunakan versi terbaru
   firebase_auth: ^4.20.0 # Untuk autentikasi (login, register)
   cloud_firestore: ^4.17.5 # Untuk database
+  http: ^1.5.0
+  firebase_storage: ^11.7.7
+  pdf: ^3.11.3
+  printing: ^5.13.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

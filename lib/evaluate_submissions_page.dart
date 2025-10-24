@@ -8,7 +8,8 @@ class EvaluateSubmissionsPage extends StatefulWidget {
   const EvaluateSubmissionsPage({super.key});
 
   @override
-  State<EvaluateSubmissionsPage> createState() => _EvaluateSubmissionsPageState();
+  State<EvaluateSubmissionsPage> createState() =>
+      _EvaluateSubmissionsPageState();
 }
 
 class _EvaluateSubmissionsPageState extends State<EvaluateSubmissionsPage>
@@ -31,8 +32,7 @@ class _EvaluateSubmissionsPageState extends State<EvaluateSubmissionsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Evaluasi Kinerja"),
-        // Tambahkan TabBar di bagian bawah AppBar
+        title: const Text("Evaluasi Kinerja"),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -41,13 +41,10 @@ class _EvaluateSubmissionsPageState extends State<EvaluateSubmissionsPage>
           ],
         ),
       ),
-      // Gunakan TabBarView untuk menampilkan konten sesuai tab yang aktif
       body: TabBarView(
         controller: _tabController,
-        children: [
-          // Konten untuk tab pertama: Laporan yang statusnya 'submitted'
+        children: const [
           SubmissionListView(status: 'submitted'),
-          // Konten untuk tab kedua: Laporan yang statusnya 'evaluated'
           SubmissionListView(status: 'evaluated'),
         ],
       ),
@@ -55,7 +52,6 @@ class _EvaluateSubmissionsPageState extends State<EvaluateSubmissionsPage>
   }
 }
 
-// Widget ini kita pisahkan agar bisa digunakan ulang untuk kedua tab
 class SubmissionListView extends StatelessWidget {
   final String status;
   const SubmissionListView({Key? key, required this.status}) : super(key: key);
@@ -69,25 +65,39 @@ class SubmissionListView extends StatelessWidget {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text("Tidak ada data untuk kategori ini."));
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                "Tidak ada data untuk kategori ini.",
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          );
         }
         if (snapshot.hasError) {
-          return Center(child: Text("Terjadi kesalahan."));
+          return Center(
+            child: Text(
+              "Terjadi kesalahan: ${snapshot.error}",
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
         }
 
         final submissions = snapshot.data!.docs;
 
         return ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 8),
           itemCount: submissions.length,
           itemBuilder: (context, index) {
-            final submissionData = submissions[index].data() as Map<String, dynamic>;
+            final submissionData =
+                submissions[index].data() as Map<String, dynamic>;
             return SubmissionTile(
               submissionData: submissionData,
               submissionId: submissions[index].id,
-              // Kirim status agar kita tahu item ini bisa di-tap atau tidak
               status: status,
             );
           },
@@ -97,75 +107,300 @@ class SubmissionListView extends StatelessWidget {
   }
 }
 
-
-// Kita modifikasi sedikit SubmissionTile
 class SubmissionTile extends StatelessWidget {
   final Map<String, dynamic> submissionData;
   final String submissionId;
-  final String status; // Tambahkan parameter status
+  final String status;
 
   const SubmissionTile({
     Key? key,
     required this.submissionData,
     required this.submissionId,
-    required this.status, // Wajib diisi
+    required this.status,
   }) : super(key: key);
-  
-  // Fungsi untuk mengambil data karyawan dan target
+
   Future<Map<String, dynamic>> _getRelatedData() async {
-    final employeeDoc = await FirebaseFirestore.instance.collection('users').doc(submissionData['employeeId']).get();
-    final targetDoc = await FirebaseFirestore.instance.collection('targets').doc(submissionData['targetId']).get();
+    final employeeDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(submissionData['employeeId'])
+        .get();
+    final targetDoc = await FirebaseFirestore.instance
+        .collection('targets')
+        .doc(submissionData['targetId'])
+        .get();
+
     return {
-      'employeeName': employeeDoc.data()?['fullName'],
-      'targetTitle': targetDoc.data()?['title'],
-      'targetData': targetDoc.data(),
+      'employeeName': employeeDoc.data()?['fullName'] ?? 'Unknown',
+      'targetTitle': targetDoc.data()?['title'] ?? 'No Title',
+      'targetData': targetDoc.data() ?? {},
     };
+  }
+
+  /// Fungsi untuk mengubah status target ke "evaluated" setelah HR memberikan evaluasi
+  Future<void> _updateTargetStatus(String targetId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('targets')
+          .doc(targetId)
+          .update({'status': 'evaluated'});
+      debugPrint("Status target $targetId berhasil diubah menjadi evaluated ✅");
+    } catch (e) {
+      debugPrint("Gagal memperbarui status target: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Cek apakah submission ini terlambat
+    final bool isLate = submissionData['isLate'] ?? false;
+
     return FutureBuilder<Map<String, dynamic>>(
       future: _getRelatedData(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return ListTile(title: Text("Memuat data..."));
+          return const Card(
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListTile(
+              leading: CircleAvatar(child: CircularProgressIndicator()),
+              title: Text("Memuat data..."),
+            ),
+          );
         }
-        if (!snapshot.hasData || snapshot.hasError) {
-          return ListTile(title: Text("Gagal memuat detail"), subtitle: Text(snapshot.error.toString()));
+        if (snapshot.hasError) {
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.red,
+                child: Icon(Icons.error, color: Colors.white),
+              ),
+              title: const Text("Gagal memuat detail"),
+              subtitle: Text(
+                snapshot.error.toString(),
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+          );
         }
 
         final relatedData = snapshot.data!;
-        final employeeName = relatedData['employeeName'] ?? 'N/A';
-        final targetTitle = relatedData['targetTitle'] ?? 'N/A';
-        final targetData = relatedData['targetData'] as Map<String, dynamic>? ?? {};
-        
-        // Dapatkan hasil evaluasi jika ada
+        final employeeName = relatedData['employeeName'] as String;
+        final targetTitle = relatedData['targetTitle'] as String;
+        final targetData = relatedData['targetData'] as Map<String, dynamic>;
+
+        // Dapatkan hasil evaluasi jika sudah ada (untuk tab Riwayat)
         String evaluationResult = '';
-        if (status == 'evaluated' && submissionData['evaluationResult'] != null) {
-          evaluationResult = submissionData['evaluationResult']['status'];
+        Color evaluationColor = Colors.grey;
+        if (status == 'evaluated' &&
+            submissionData['evaluationResult'] != null) {
+          evaluationResult =
+              submissionData['evaluationResult']['status'] ?? 'N/A';
+
+          // Set warna berdasarkan hasil evaluasi
+          switch (evaluationResult.toUpperCase()) {
+            case 'BONUS':
+              evaluationColor = Colors.green;
+              break;
+            case 'FEEDBACK':
+              evaluationColor = Colors.blue;
+              break;
+            case 'SP1':
+            case 'SP2':
+            case 'SP3':
+              evaluationColor = Colors.red;
+              break;
+          }
         }
 
         return Card(
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          elevation: isLate ? 4 : 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: isLate
+                ? const BorderSide(color: Colors.red, width: 2)
+                : BorderSide.none,
+          ),
           child: ListTile(
-            leading: CircleAvatar(child: Icon(Icons.person)),
-            title: Text(employeeName),
-            subtitle: Text("Target: $targetTitle"),
-            // Tampilkan status evaluasi di trailing jika sudah dievaluasi
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            leading: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const CircleAvatar(
+                  radius: 24,
+                  child: Icon(Icons.person, size: 28),
+                ),
+                // Badge warning untuk keterlambatan
+                if (isLate)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.warning_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    employeeName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                // Badge TELAT di sebelah nama
+                if (isLate)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.schedule, size: 12, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'TELAT',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  "Target: $targetTitle",
+                  style: const TextStyle(fontSize: 14),
+                ),
+                // Pesan keterlambatan
+                if (isLate) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.red[200]!),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 14,
+                          color: Colors.red[700],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Terlambat mengirim hasil kerja",
+                          style: TextStyle(
+                            color: Colors.red[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
             trailing: status == 'evaluated'
-              ? Chip(label: Text(evaluationResult, style: TextStyle(color: Colors.white)), backgroundColor: Colors.grey)
-              : Icon(Icons.chevron_right),
-            onTap: () {
-              // HANYA BISA DI-TAP JIKA STATUSNYA 'submitted'
+                ? Chip(
+                    label: Text(
+                      evaluationResult,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    backgroundColor: evaluationColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  )
+                : const Icon(Icons.chevron_right, size: 28),
+            onTap: () async {
               if (status == 'submitted') {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return EvaluationDetailPage(
-                    submissionId: submissionId,
-                    submissionData: submissionData,
-                    targetData: targetData,
-                    employeeName: employeeName,
-                  );
-                }));
+                // Buka halaman detail evaluasi
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EvaluationDetailPage(
+                      submissionId: submissionId,
+                      submissionData: submissionData,
+                      targetData: targetData,
+                      employeeName: employeeName,
+                    ),
+                  ),
+                );
+
+                // ✅ Jika HR selesai memberikan evaluasi, ubah status target
+                if (result == 'evaluated') {
+                  await _updateTargetStatus(submissionData['targetId']);
+                }
+              } else {
+                // Untuk tab Riwayat, bisa tampilkan detail read-only
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(employeeName),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Target: $targetTitle"),
+                        const SizedBox(height: 8),
+                        Text("Hasil Evaluasi: $evaluationResult"),
+                        if (isLate) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            "⚠️ Karyawan ini terlambat mengirim",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Tutup"),
+                      ),
+                    ],
+                  ),
+                );
               }
             },
           ),
