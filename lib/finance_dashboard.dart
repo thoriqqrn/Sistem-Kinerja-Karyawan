@@ -5,12 +5,13 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
+// Asumsi file ini ada
 import 'login_page.dart';
 import 'bonus_report_page.dart';
 import 'package:printing/printing.dart';
 
 // ===============================================================
-// =============== UTILITIES CLASS ===============================
+// =============== UTILITIES CLASS & PDF GENERATOR ===============
 // ===============================================================
 
 class FinanceUtils {
@@ -51,13 +52,16 @@ class FinanceUtils {
   }) async {
     final pdf = pw.Document();
     final bonusAmount = requestData['bonusAmount'] ?? 0;
-    // Gunakan paidAt jika ada, jika tidak, gunakan requestDate
-    final paidAtTimestamp =
-        requestData['paidAt'] as Timestamp? ??
-        requestData['requestDate'] as Timestamp?;
-    final paidAt = paidAtTimestamp?.toDate() ?? DateTime.now();
+    // Gunakan invoiceNumber jika ada, jika tidak, generate dari waktu
     final invoiceNumber =
-        'INV-${paidAt.millisecondsSinceEpoch}'; // Nomor unik berdasarkan waktu pembayaran/permintaan
+        requestData['invoiceNumber'] ??
+        'INV-${DateTime.now().millisecondsSinceEpoch}';
+
+    final paidAt = requestData['paidAt'] != null
+        ? (requestData['paidAt'] as Timestamp).toDate()
+        : requestData['approvedAt'] != null
+        ? (requestData['approvedAt'] as Timestamp).toDate()
+        : DateTime.now();
 
     pdf.addPage(
       pw.Page(
@@ -182,8 +186,27 @@ class FinanceUtils {
                   ),
                 ),
                 pw.SizedBox(height: 32),
+                if (requestData['status'] == 'paid')
+                  pw.Text(
+                    'Status: DIBAYAR',
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.green700,
+                    ),
+                  )
+                else
+                  pw.Text(
+                    'Status: DISETUJUI - Menunggu Pencairan',
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.blue700,
+                    ),
+                  ),
+                pw.SizedBox(height: 8),
                 pw.Text(
-                  'Tanggal Pencairan: ${DateFormat('dd MMMM yyyy', 'id_ID').format(paidAt)}',
+                  'Tanggal: ${DateFormat('dd MMMM yyyy', 'id_ID').format(paidAt)}',
                   style: const pw.TextStyle(fontSize: 10),
                 ),
                 pw.Spacer(),
@@ -227,7 +250,8 @@ class _FinanceDashboardState extends State<FinanceDashboard>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    // Menambahkan tab 'rejected'
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -271,10 +295,12 @@ class _FinanceDashboardState extends State<FinanceDashboard>
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: const [
-            Tab(icon: Icon(Icons.pending_actions), text: "Permintaan Bonus"),
+            Tab(icon: Icon(Icons.pending_actions), text: "Permintaan"),
             Tab(icon: Icon(Icons.check_circle), text: "Disetujui"),
-            Tab(icon: Icon(Icons.history), text: "Riwayat"),
+            Tab(icon: Icon(Icons.payment), text: "Dibayar"),
+            Tab(icon: Icon(Icons.cancel), text: "Ditolak"), // Tab baru
           ],
         ),
       ),
@@ -284,6 +310,7 @@ class _FinanceDashboardState extends State<FinanceDashboard>
           BonusRequestListView(status: 'pending'),
           BonusRequestListView(status: 'approved'),
           BonusRequestListView(status: 'paid'),
+          BonusRequestListView(status: 'rejected'), // List view baru
         ],
       ),
     );
@@ -329,7 +356,9 @@ class BonusRequestListView extends StatelessWidget {
                       ? Icons.inbox
                       : status == 'approved'
                       ? Icons.check_circle_outline
-                      : Icons.history,
+                      : status == 'paid'
+                      ? Icons.payment
+                      : Icons.cancel,
                   size: 64,
                   color: Colors.grey[400],
                 ),
@@ -339,7 +368,9 @@ class BonusRequestListView extends StatelessWidget {
                       ? "Tidak ada permintaan bonus baru"
                       : status == 'approved'
                       ? "Belum ada bonus yang disetujui"
-                      : "Belum ada riwayat pembayaran",
+                      : status == 'paid'
+                      ? "Belum ada riwayat pembayaran"
+                      : "Tidak ada bonus yang ditolak",
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
               ],
@@ -466,6 +497,11 @@ class BonusRequestCard extends StatelessWidget {
             statusIcon = Icons.payment;
             statusText = 'Sudah Dibayar';
             break;
+          case 'rejected':
+            statusColor = Colors.red;
+            statusIcon = Icons.cancel;
+            statusText = 'Ditolak';
+            break;
           default:
             statusColor = Colors.grey;
             statusIcon = Icons.help;
@@ -482,6 +518,7 @@ class BonusRequestCard extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () {
+              // Navigasi ke BonusDetailPage
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -538,6 +575,7 @@ class BonusRequestCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      // Tampilkan Nominal Bonus jika sudah ada
                       if (requestData['bonusAmount'] != null)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -589,7 +627,7 @@ class BonusRequestCard extends StatelessWidget {
                     FinanceUtils.formatDate(requestDate),
                   ),
 
-                  // Tampilkan info tambahan jika sudah approved
+                  // Info Tambahan (Approved, Paid, Rejected)
                   if (status == 'approved' || status == 'paid') ...[
                     const SizedBox(height: 8),
                     if (requestData['approvedAt'] != null)
@@ -612,45 +650,96 @@ class BonusRequestCard extends StatelessWidget {
                           (requestData['paidAt'] as Timestamp).toDate(),
                         ),
                       ),
-                    // Tombol cetak invoice untuk status paid
-                    if (requestData['invoiceGenerated'] == true) ...[
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          // Generate dan tampilkan invoice
-                          try {
-                            final pdfBytes =
-                                await FinanceUtils.generateInvoicePdf(
-                                  requestData: requestData,
-                                  employeeName: employeeName,
-                                  submissionData: submissionData,
-                                  targetData: targetData,
-                                );
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        // Generate dan tampilkan invoice lokal
+                        try {
+                          final pdfBytes =
+                              await FinanceUtils.generateInvoicePdf(
+                                requestData: requestData,
+                                employeeName: employeeName,
+                                submissionData: submissionData,
+                                targetData: targetData,
+                              );
 
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PdfPreviewPage(
-                                  pdfBytes: pdfBytes,
-                                  title: 'Invoice Bonus - $employeeName',
-                                  filename: 'invoice_bonus_$requestId.pdf',
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PdfPreviewPage(
+                                pdfBytes: pdfBytes,
+                                title: 'Invoice Bonus - $employeeName',
+                                filename: 'invoice_bonus_$requestId.pdf',
+                              ),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Error: $e"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.picture_as_pdf, size: 18),
+                      label: const Text("Cetak Invoice"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[700],
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+
+                  if (status == 'rejected') ...[
+                    const SizedBox(height: 8),
+                    if (requestData['rejectedAt'] != null)
+                      _buildInfoRow(
+                        Icons.cancel,
+                        "Ditolak",
+                        FinanceUtils.formatDate(
+                          (requestData['rejectedAt'] as Timestamp).toDate(),
+                        ),
+                      ),
+                    if (requestData['rejectionReason'] != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 16,
+                                  color: Colors.red[700],
                                 ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Alasan Penolakan:",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red[900],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              requestData['rejectionReason'],
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[800],
                               ),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Error: $e"),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.picture_as_pdf, size: 18),
-                        label: const Text("Cetak Invoice"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red[700],
-                          foregroundColor: Colors.white,
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -754,18 +843,37 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
 
-      await FirebaseFirestore.instance
+      final submissionId = widget.requestData['submissionId'];
+      final targetId = widget.requestData['targetId'];
+
+      final batch = FirebaseFirestore.instance.batch();
+
+      // 1. Update Bonus Request (status: approved)
+      final requestRef = FirebaseFirestore.instance
           .collection('bonus_requests')
-          .doc(widget.requestId)
-          .update({
-            'status': 'approved',
-            'bonusAmount': bonusAmount,
-            'approvedBy': currentUser?.uid ?? 'unknown',
-            'approvedAt': Timestamp.now(),
-          });
+          .doc(widget.requestId);
+      batch.update(requestRef, {
+        'status': 'approved',
+        'bonusAmount': bonusAmount,
+        'approvedBy': currentUser?.uid ?? 'unknown',
+        'approvedAt': Timestamp.now(),
+      });
+
+      // 2. Update Performance Submissions (Status: bonus_approved untuk Karyawan/HR)
+      final submissionRef = FirebaseFirestore.instance
+          .collection('performance_submissions')
+          .doc(submissionId);
+      batch.update(submissionRef, {'status': 'bonus_approved'});
+
+      // 3. Update Targets (Status: bonus_approved untuk Karyawan)
+      final targetRef = FirebaseFirestore.instance
+          .collection('targets')
+          .doc(targetId);
+      batch.update(targetRef, {'status': 'bonus_approved'});
+
+      await batch.commit();
 
       _showSuccess("✅ Bonus berhasil disetujui!");
-      // Pop dan refresh view, atau pop dan biarkan stream builder yang merefresh
       Navigator.pop(context);
     } catch (e) {
       _showError("❌ Gagal menyetujui bonus: $e");
@@ -775,6 +883,9 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
   }
 
   Future<void> _rejectBonus() async {
+    final reason = await _showRejectReasonDialog();
+    if (reason == null || reason.isEmpty) return;
+
     final confirm = await _showConfirmDialog(
       "Tolak Permintaan Bonus",
       "Apakah Anda yakin ingin menolak permintaan bonus ini?",
@@ -785,14 +896,43 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
 
-      await FirebaseFirestore.instance
+      final submissionId = widget.requestData['submissionId'];
+      final targetId = widget.requestData['targetId'];
+
+      final batch = FirebaseFirestore.instance.batch();
+
+      // 1. Update Bonus Request (status: rejected)
+      final requestRef = FirebaseFirestore.instance
           .collection('bonus_requests')
-          .doc(widget.requestId)
-          .update({
-            'status': 'rejected',
-            'rejectedBy': currentUser?.uid ?? 'unknown',
-            'rejectedAt': Timestamp.now(),
-          });
+          .doc(widget.requestId);
+      batch.update(requestRef, {
+        'status': 'rejected',
+        'rejectedBy': currentUser?.uid ?? 'unknown',
+        'rejectedAt': Timestamp.now(),
+        'rejectionReason': reason,
+      });
+
+      // 2. Update Performance Submissions (Status: evaluated dengan hasil DITOLAK)
+      final submissionRef = FirebaseFirestore.instance
+          .collection('performance_submissions')
+          .doc(submissionId);
+      batch.update(submissionRef, {
+        'status': 'evaluated', // Kembalikan ke evaluated/riwayat HR
+        'evaluationResult': {
+          'status': 'DITOLAK',
+          'message': 'Permintaan bonus ditolak oleh Keuangan: $reason',
+        },
+      });
+
+      // 3. Update Targets (Status: evaluated)
+      final targetRef = FirebaseFirestore.instance
+          .collection('targets')
+          .doc(targetId);
+      batch.update(targetRef, {
+        'status': 'evaluated', // Kembalikan ke riwayat Karyawan
+      });
+
+      await batch.commit();
 
       _showSuccess("✅ Permintaan bonus ditolak");
       Navigator.pop(context);
@@ -801,6 +941,59 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<String?> _showRejectReasonDialog() async {
+    final controller = TextEditingController();
+
+    return await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Alasan Penolakan"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Jelaskan alasan penolakan bonus ini:",
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: "Contoh: Budget bonus bulan ini sudah habis",
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 4,
+              maxLength: 500,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Alasan tidak boleh kosong"),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+              Navigator.pop(context, controller.text.trim());
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Lanjutkan"),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _generateAndPreviewInvoice() async {
@@ -814,25 +1007,19 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
 
     try {
       final paidAtTimestamp = Timestamp.now();
-
-      // Update Firestore sebelum membuat PDF agar data di PDF terbaru
       final currentUser = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance
-          .collection('bonus_requests')
-          .doc(widget.requestId)
-          .update({
-            'status': 'paid',
-            'paidBy': currentUser?.uid ?? 'unknown',
-            'paidAt': paidAtTimestamp,
-            'invoiceGenerated': true,
-          });
 
-      // Ambil data terbaru untuk generate PDF
+      final submissionId = widget.requestData['submissionId'];
+      final targetId = widget.requestData['targetId'];
+      final invoiceNumber = 'INV-${paidAtTimestamp.millisecondsSinceEpoch}';
+
+      // Ambil data untuk generate PDF
       final updatedRequestData = Map<String, dynamic>.from(widget.requestData)
         ..['status'] = 'paid'
         ..['paidAt'] = paidAtTimestamp
-        ..['invoiceGenerated'] = true;
+        ..['invoiceNumber'] = invoiceNumber;
 
+      // Generate PDF
       final pdfBytes = await FinanceUtils.generateInvoicePdf(
         requestData: updatedRequestData,
         employeeName: widget.employeeName,
@@ -840,12 +1027,39 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
         targetData: widget.targetData,
       );
 
+      final batch = FirebaseFirestore.instance.batch();
+
+      // 1. Update Bonus Request (status: paid)
+      final requestRef = FirebaseFirestore.instance
+          .collection('bonus_requests')
+          .doc(widget.requestId);
+      batch.update(requestRef, {
+        'status': 'paid',
+        'paidBy': currentUser?.uid ?? 'unknown',
+        'paidAt': paidAtTimestamp,
+        'invoiceNumber': invoiceNumber,
+      });
+
+      // 2. Update Performance Submissions (Status: paid)
+      final submissionRef = FirebaseFirestore.instance
+          .collection('performance_submissions')
+          .doc(submissionId);
+      batch.update(submissionRef, {'status': 'paid'});
+
+      // 3. Update Targets (Status: paid)
+      final targetRef = FirebaseFirestore.instance
+          .collection('targets')
+          .doc(targetId);
+      batch.update(targetRef, {'status': 'paid'});
+
+      await batch.commit();
+
       setState(() => _isLoading = false);
 
       if (mounted) {
         await _showPdfPreview(pdfBytes);
         _showSuccess("✅ Pembayaran berhasil dicatat!");
-        Navigator.pop(context); // Kembali ke dashboard
+        Navigator.pop(context);
       }
     } catch (e) {
       setState(() => _isLoading = false);
@@ -857,7 +1071,6 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Pastikan paidAt ada di requestData, jika tidak, fetch ulang atau pakai requestDate
       final pdfBytes = await FinanceUtils.generateInvoicePdf(
         requestData: widget.requestData,
         employeeName: widget.employeeName,
@@ -1019,7 +1232,7 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
             ),
             const SizedBox(height: 16),
 
-            // Card Input Nominal Bonus (hanya untuk status pending)
+            // Card Aksi: Pending
             if (status == 'pending') ...[
               Card(
                 elevation: 2,
@@ -1060,8 +1273,6 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Tombol Aksi untuk Pending
               if (_isLoading)
                 const Center(child: CircularProgressIndicator())
               else
@@ -1104,7 +1315,7 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
                 ),
             ],
 
-            // Info & Tombol untuk Approved
+            // Card Aksi: Approved
             if (status == 'approved') ...[
               Card(
                 elevation: 2,
@@ -1162,8 +1373,6 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Tombol Generate Invoice & Pay
               if (_isLoading)
                 const Center(child: CircularProgressIndicator())
               else
@@ -1185,7 +1394,7 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
                 ),
             ],
 
-            // Info untuk Paid
+            // Card Aksi: Paid
             if (status == 'paid') ...[
               Card(
                 elevation: 2,
@@ -1239,8 +1448,6 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
                         ),
                       ],
                       const SizedBox(height: 16),
-
-                      // Tombol untuk generate ulang invoice
                       if (_isLoading)
                         const Center(child: CircularProgressIndicator())
                       else
@@ -1253,6 +1460,88 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
                             foregroundColor: Colors.white,
                           ),
                         ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+
+            // Card Aksi: Rejected
+            if (status == 'rejected') ...[
+              Card(
+                elevation: 2,
+                color: Colors.red[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.cancel, color: Colors.red[700]),
+                          const SizedBox(width: 8),
+                          const Text(
+                            "Bonus Ditolak",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      if (widget.requestData['rejectedAt'] != null) ...[
+                        Text(
+                          "Ditolak: ${FinanceUtils.formatDate((widget.requestData['rejectedAt'] as Timestamp).toDate())}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (widget.requestData['rejectionReason'] != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: Colors.red[700],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Alasan Penolakan:",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red[900],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                widget.requestData['rejectionReason'],
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[800],
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
