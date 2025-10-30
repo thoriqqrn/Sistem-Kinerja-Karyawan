@@ -1,447 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'dart:typed_data';
-import 'package:printing/printing.dart';
-import 'package:intl/intl.dart';
-
-// ===============================================================
-// =============== UTILITIES CLASS ===============================
-// ===============================================================
-
-class FinanceUtils {
-  static String formatCurrency(num amount) {
-    final formatter = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
-    return formatter.format(amount);
-  }
-
-  static String formatDate(DateTime date) {
-    return DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date);
-  }
-
-  static pw.Widget buildPDFRow(String label, String value) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 4),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text('$label:', style: const pw.TextStyle(fontSize: 11)),
-          pw.Text(
-            value,
-            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Future<Uint8List> generateInvoicePdf({
-    required Map<String, dynamic> requestData,
-    required String employeeName,
-    required Map<String, dynamic> submissionData,
-    required Map<String, dynamic> targetData,
-  }) async {
-    final pdf = pw.Document();
-    final bonusAmount = requestData['bonusAmount'] ?? 0;
-    final invoiceNumber =
-        requestData['invoiceNumber'] ??
-        'INV-${DateTime.now().millisecondsSinceEpoch}';
-
-    final paidAt = requestData['paidAt'] != null
-        ? (requestData['paidAt'] as Timestamp).toDate()
-        : requestData['approvedAt'] != null
-        ? (requestData['approvedAt'] as Timestamp).toDate()
-        : DateTime.now();
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Padding(
-            padding: const pw.EdgeInsets.all(32),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'PT NAMA PERUSAHAAN',
-                          style: pw.TextStyle(
-                            fontSize: 20,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          'Invoice Bonus Karyawan',
-                          style: const pw.TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        pw.Text(
-                          'INVOICE',
-                          style: pw.TextStyle(
-                            fontSize: 24,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.blue700,
-                          ),
-                        ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          invoiceNumber,
-                          style: const pw.TextStyle(fontSize: 10),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 32),
-                pw.Divider(thickness: 2),
-                pw.SizedBox(height: 24),
-
-                pw.Text(
-                  'Kepada:',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(employeeName, style: const pw.TextStyle(fontSize: 16)),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  'ID Karyawan: ${requestData['employeeId']}',
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-                pw.SizedBox(height: 32),
-
-                pw.Container(
-                  padding: const pw.EdgeInsets.all(16),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.grey200,
-                    borderRadius: pw.BorderRadius.circular(8),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'Detail Bonus',
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.SizedBox(height: 12),
-                      FinanceUtils.buildPDFRow(
-                        'Target',
-                        targetData['title'] ?? 'N/A',
-                      ),
-                      FinanceUtils.buildPDFRow(
-                        'Periode',
-                        targetData['period'] ?? 'N/A',
-                      ),
-                      FinanceUtils.buildPDFRow(
-                        'Pencapaian',
-                        '${submissionData['achievedValue']} / ${targetData['targetValue']} ${targetData['unit'] ?? ''}',
-                      ),
-                      pw.SizedBox(height: 8),
-                      pw.Divider(),
-                      pw.SizedBox(height: 8),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text(
-                            'TOTAL BONUS:',
-                            style: pw.TextStyle(
-                              fontSize: 16,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                          pw.Text(
-                            formatCurrency(bonusAmount),
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.green700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                pw.SizedBox(height: 32),
-                pw.Text(
-                  requestData['status'] == 'paid'
-                      ? 'Status: DIBAYAR'
-                      : 'Status: DISETUJUI - Menunggu Pencairan',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                    color: requestData['status'] == 'paid'
-                        ? PdfColors.green700
-                        : PdfColors.blue700,
-                  ),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  'Tanggal: ${DateFormat('dd MMMM yyyy', 'id_ID').format(paidAt)}',
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-                pw.Spacer(),
-                pw.Divider(),
-                pw.SizedBox(height: 8),
-                pw.Center(
-                  child: pw.Text(
-                    'Terima kasih atas kontribusi Anda!',
-                    style: pw.TextStyle(
-                      fontSize: 12,
-                      fontStyle: pw.FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-
-    return pdf.save();
-  }
-
-  // FUNCTION YANG HILANG - IMPLEMENTASI LENGKAP
-  static Future<Uint8List> generateWarningLetterPdf({
-    required Map<String, dynamic> warningLetter,
-    required String employeeName,
-    required Map<String, dynamic> submissionData,
-    required Map<String, dynamic> targetData,
-  }) async {
-    final pdf = pw.Document();
-    final level = warningLetter['level'] ?? 'SP';
-    final message = warningLetter['message'] ?? 'Tidak ada catatan';
-    final letterNumber =
-        warningLetter['letterNumber'] ??
-        'SP-${DateTime.now().millisecondsSinceEpoch}';
-    final issuedAt = warningLetter['issuedAt'] != null
-        ? (warningLetter['issuedAt'] as Timestamp).toDate()
-        : DateTime.now();
-
-    // Tentukan warna berdasarkan level
-    PdfColor levelColor;
-    switch (level) {
-      case 'SP1':
-        levelColor = PdfColors.orange;
-        break;
-      case 'SP2':
-        levelColor = PdfColors.deepOrange;
-        break;
-      case 'SP3':
-        levelColor = PdfColors.red;
-        break;
-      default:
-        levelColor = PdfColors.grey;
-    }
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Padding(
-            padding: const pw.EdgeInsets.all(32),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                // Header
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'PT NAMA PERUSAHAAN',
-                          style: pw.TextStyle(
-                            fontSize: 20,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          'Divisi Human Resources',
-                          style: const pw.TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        pw.Text(
-                          'SURAT PERINGATAN',
-                          style: pw.TextStyle(
-                            fontSize: 18,
-                            fontWeight: pw.FontWeight.bold,
-                            color: levelColor,
-                          ),
-                        ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          letterNumber,
-                          style: const pw.TextStyle(fontSize: 10),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 32),
-                pw.Divider(thickness: 2),
-                pw.SizedBox(height: 24),
-
-                // Level SP
-                pw.Container(
-                  padding: const pw.EdgeInsets.all(12),
-                  decoration: pw.BoxDecoration(
-                    color: levelColor.shade(0.1),
-                    borderRadius: pw.BorderRadius.circular(8),
-                  ),
-                  child: pw.Center(
-                    child: pw.Text(
-                      level,
-                      style: pw.TextStyle(
-                        fontSize: 24,
-                        fontWeight: pw.FontWeight.bold,
-                        color: levelColor,
-                      ),
-                    ),
-                  ),
-                ),
-                pw.SizedBox(height: 24),
-
-                // Kepada
-                pw.Text(
-                  'Kepada:',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(employeeName, style: const pw.TextStyle(fontSize: 16)),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  'ID Karyawan: ${warningLetter['employeeId']}',
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-                pw.SizedBox(height: 32),
-
-                // Detail Target
-                pw.Container(
-                  padding: const pw.EdgeInsets.all(16),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.grey200,
-                    borderRadius: pw.BorderRadius.circular(8),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'Detail Kinerja',
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.SizedBox(height: 12),
-                      buildPDFRow('Target', targetData['title'] ?? 'N/A'),
-                      buildPDFRow('Periode', targetData['period'] ?? 'N/A'),
-                      buildPDFRow(
-                        'Target',
-                        '${targetData['targetValue']} ${targetData['unit'] ?? ''}',
-                      ),
-                      buildPDFRow(
-                        'Pencapaian',
-                        '${submissionData['achievedValue']} ${targetData['unit'] ?? ''}',
-                      ),
-                    ],
-                  ),
-                ),
-                pw.SizedBox(height: 24),
-
-                // Catatan
-                pw.Text(
-                  'Catatan:',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Container(
-                  width: double.infinity,
-                  padding: const pw.EdgeInsets.all(16),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.grey400),
-                    borderRadius: pw.BorderRadius.circular(8),
-                  ),
-                  child: pw.Text(
-                    message,
-                    style: const pw.TextStyle(fontSize: 12, height: 1.5),
-                  ),
-                ),
-
-                pw.Spacer(),
-
-                // Footer
-                pw.Text(
-                  'Tanggal Terbit: ${DateFormat('dd MMMM yyyy', 'id_ID').format(issuedAt)}',
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-                pw.SizedBox(height: 32),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.end,
-                  children: [
-                    pw.Column(
-                      children: [
-                        pw.Text(
-                          'Hormat Kami,',
-                          style: const pw.TextStyle(fontSize: 11),
-                        ),
-                        pw.SizedBox(height: 40),
-                        pw.Text(
-                          'Human Resources Department',
-                          style: pw.TextStyle(
-                            fontSize: 11,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-
-    return pdf.save();
-  }
-}
+import 'utils/finance_utils.dart';
+import 'widgets/pdf_preview_page.dart';
+import 'daily_progress_input_page.dart';
 
 // ===============================================================
 // =============== PAGE UTAMA ====================================
@@ -786,17 +348,54 @@ class TargetCard extends StatelessWidget {
               const SizedBox(height: 8),
               _buildDeadlineInfo(targetData['deadline'] as Timestamp),
             ],
+
+            // Progress Bar (untuk semua status kecuali evaluated/paid)
+            if (status != 'evaluated' && status != 'paid') ...[
+              const SizedBox(height: 16),
+              _buildProgressBar(),
+            ],
+
             const Divider(height: 24),
 
-            if (status == 'active')
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _showInputHasilDialog(context),
-                  child: const Text('Input Hasil Kerja'),
-                ),
-              )
-            else if (status == 'submitted') ...[
+            if (status == 'active') ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.edit_note),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DailyProgressInputPage(
+                              targetId: targetId,
+                              targetData: targetData,
+                            ),
+                          ),
+                        );
+                      },
+                      label: const Text('Input Harian'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.send),
+                      onPressed: () => _showInputHasilDialog(context),
+                      label: const Text('Kirim Final'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else if (status == 'submitted') ...[
               _buildStatusChip("Menunggu Evaluasi HR", Colors.amber),
               const SizedBox(height: 8),
               _buildEvaluationResultRealtime(targetId),
@@ -1558,6 +1157,157 @@ class TargetCard extends StatelessWidget {
     );
   }
 
+  Widget _buildProgressBar() {
+    final targetValue = targetData['targetValue'] as int;
+    final unit = targetData['unit'] ?? '';
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('daily_progress')
+          .where('targetId', isEqualTo: targetId)
+          .where('employeeId', isEqualTo: currentUserUid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        int totalProgress = 0;
+
+        if (snapshot.hasData) {
+          for (var doc in snapshot.data!.docs) {
+            totalProgress +=
+                (doc.data() as Map<String, dynamic>)['dailyValue'] as int? ?? 0;
+          }
+        }
+
+        final percentage = targetValue > 0
+            ? (totalProgress / targetValue) * 100
+            : 0;
+        final remaining = targetValue - totalProgress;
+
+        // Hitung sisa hari
+        final deadline = targetData['deadline'] as Timestamp?;
+        int remainingDays = 0;
+        if (deadline != null) {
+          remainingDays = deadline.toDate().difference(DateTime.now()).inDays;
+        }
+
+        final dailyTarget = remainingDays > 0 && remaining > 0
+            ? (remaining / remainingDays).ceil()
+            : 0;
+
+        // Determine status color
+        Color progressColor;
+        String statusText;
+
+        if (percentage >= 75) {
+          progressColor = Colors.green;
+          statusText = 'Excellent! 🌟';
+        } else if (percentage >= 50) {
+          progressColor = Colors.blue;
+          statusText = 'On Track ✓';
+        } else if (percentage >= 25) {
+          progressColor = Colors.orange;
+          statusText = 'Perlu Ditingkatkan ⚡';
+        } else {
+          progressColor = Colors.red;
+          statusText = 'Perlu Fokus! 🔥';
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Progress Harian',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: progressColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: percentage / 100,
+                  minHeight: 12,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$totalProgress / $targetValue $unit',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${percentage.toStringAsFixed(1)}% tercapai',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                  if (remainingDays > 0 && remaining > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: progressColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: progressColor),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '$dailyTarget $unit/hari',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: progressColor,
+                            ),
+                          ),
+                          Text(
+                            'target harian',
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildDeadlineInfo(Timestamp deadlineTimestamp) {
     final deadline = deadlineTimestamp.toDate();
     final now = DateTime.now();
@@ -1629,56 +1379,5 @@ class TargetCard extends StatelessWidget {
       'Des',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-}
-
-// ===============================================================
-// =============== PDF PREVIEW PAGE ==============================
-// ===============================================================
-
-class PdfPreviewPage extends StatelessWidget {
-  final Uint8List pdfBytes;
-  final String title;
-  final String filename;
-
-  const PdfPreviewPage({
-    Key? key,
-    required this.pdfBytes,
-    required this.title,
-    required this.filename,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: Colors.red[700],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'Bagikan PDF',
-            onPressed: () async {
-              await Printing.sharePdf(bytes: pdfBytes, filename: filename);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            tooltip: 'Print PDF',
-            onPressed: () async {
-              await Printing.layoutPdf(onLayout: (format) => pdfBytes);
-            },
-          ),
-        ],
-      ),
-      body: PdfPreview(
-        build: (format) => pdfBytes,
-        allowSharing: true,
-        allowPrinting: true,
-        canChangePageFormat: false,
-        canChangeOrientation: false,
-        pdfFileName: filename,
-      ),
-    );
   }
 }

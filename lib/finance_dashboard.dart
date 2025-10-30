@@ -1,236 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'dart:typed_data';
-import 'package:intl/intl.dart';
-// Asumsi file ini ada
 import 'login_page.dart';
 import 'bonus_report_page.dart';
-import 'package:printing/printing.dart';
-
-// ===============================================================
-// =============== UTILITIES CLASS & PDF GENERATOR ===============
-// ===============================================================
-
-class FinanceUtils {
-  static String formatCurrency(num amount) {
-    final formatter = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
-    return formatter.format(amount);
-  }
-
-  static String formatDate(DateTime date) {
-    return DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date);
-  }
-
-  static pw.Widget buildPDFRow(String label, String value) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 4),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text('$label:', style: const pw.TextStyle(fontSize: 11)),
-          pw.Text(
-            value,
-            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Future<Uint8List> generateInvoicePdf({
-    required Map<String, dynamic> requestData,
-    required String employeeName,
-    required Map<String, dynamic> submissionData,
-    required Map<String, dynamic> targetData,
-  }) async {
-    final pdf = pw.Document();
-    final bonusAmount = requestData['bonusAmount'] ?? 0;
-    // Gunakan invoiceNumber jika ada, jika tidak, generate dari waktu
-    final invoiceNumber =
-        requestData['invoiceNumber'] ??
-        'INV-${DateTime.now().millisecondsSinceEpoch}';
-
-    final paidAt = requestData['paidAt'] != null
-        ? (requestData['paidAt'] as Timestamp).toDate()
-        : requestData['approvedAt'] != null
-        ? (requestData['approvedAt'] as Timestamp).toDate()
-        : DateTime.now();
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Padding(
-            padding: const pw.EdgeInsets.all(32),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'PT NAMA PERUSAHAAN',
-                          style: pw.TextStyle(
-                            fontSize: 20,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          'Invoice Bonus Karyawan',
-                          style: const pw.TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        pw.Text(
-                          'INVOICE',
-                          style: pw.TextStyle(
-                            fontSize: 24,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.blue700,
-                          ),
-                        ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          invoiceNumber,
-                          style: const pw.TextStyle(fontSize: 10),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 32),
-                pw.Divider(thickness: 2),
-                pw.SizedBox(height: 24),
-                pw.Text(
-                  'Kepada:',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(employeeName, style: const pw.TextStyle(fontSize: 16)),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  'ID Karyawan: ${requestData['employeeId']}',
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-                pw.SizedBox(height: 32),
-                pw.Container(
-                  padding: const pw.EdgeInsets.all(16),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.grey200,
-                    borderRadius: pw.BorderRadius.circular(8),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'Detail Bonus',
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.SizedBox(height: 12),
-                      FinanceUtils.buildPDFRow(
-                        'Target',
-                        targetData['title'] ?? 'N/A',
-                      ),
-                      FinanceUtils.buildPDFRow(
-                        'Periode',
-                        targetData['period'] ?? 'N/A',
-                      ),
-                      FinanceUtils.buildPDFRow(
-                        'Pencapaian',
-                        '${submissionData['achievedValue']} / ${targetData['targetValue']} ${targetData['unit'] ?? ''}',
-                      ),
-                      pw.SizedBox(height: 8),
-                      pw.Divider(),
-                      pw.SizedBox(height: 8),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text(
-                            'TOTAL BONUS:',
-                            style: pw.TextStyle(
-                              fontSize: 16,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                          pw.Text(
-                            FinanceUtils.formatCurrency(bonusAmount),
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.green700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                pw.SizedBox(height: 32),
-                if (requestData['status'] == 'paid')
-                  pw.Text(
-                    'Status: DIBAYAR',
-                    style: pw.TextStyle(
-                      fontSize: 12,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.green700,
-                    ),
-                  )
-                else
-                  pw.Text(
-                    'Status: DISETUJUI - Menunggu Pencairan',
-                    style: pw.TextStyle(
-                      fontSize: 12,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.blue700,
-                    ),
-                  ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  'Tanggal: ${DateFormat('dd MMMM yyyy', 'id_ID').format(paidAt)}',
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-                pw.Spacer(),
-                pw.Divider(),
-                pw.SizedBox(height: 8),
-                pw.Center(
-                  child: pw.Text(
-                    'Terima kasih atas kontribusi Anda!',
-                    style: pw.TextStyle(
-                      fontSize: 12,
-                      fontStyle: pw.FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-
-    return pdf.save();
-  }
-}
+import 'utils/finance_utils.dart';
+import 'utils/constants.dart';
+import 'widgets/pdf_preview_page.dart';
 
 // ===============================================================
 // =============== DASHBOARD UTAMA ===============================
@@ -833,6 +609,14 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
       return;
     }
 
+    // Validasi minimal bonus amount
+    if (bonusAmount < BonusConfig.minimumAmount) {
+      _showError(
+        "Nominal bonus minimal adalah ${BonusConfig.minimumAmountFormatted}",
+      );
+      return;
+    }
+
     final confirm = await _showConfirmDialog(
       "Setujui Bonus",
       "Apakah Anda yakin ingin menyetujui bonus sebesar ${FinanceUtils.formatCurrency(bonusAmount)}?",
@@ -1034,23 +818,24 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
           .collection('bonus_requests')
           .doc(widget.requestId);
       batch.update(requestRef, {
-        'status': 'paid',
+        'status': BonusStatus.paid,
         'paidBy': currentUser?.uid ?? 'unknown',
         'paidAt': paidAtTimestamp,
         'invoiceNumber': invoiceNumber,
+        'invoiceGenerated': true, // Flag untuk laporan bonus
       });
 
       // 2. Update Performance Submissions (Status: paid)
       final submissionRef = FirebaseFirestore.instance
           .collection('performance_submissions')
           .doc(submissionId);
-      batch.update(submissionRef, {'status': 'paid'});
+      batch.update(submissionRef, {'status': SubmissionStatus.paid});
 
       // 3. Update Targets (Status: paid)
       final targetRef = FirebaseFirestore.instance
           .collection('targets')
           .doc(targetId);
-      batch.update(targetRef, {'status': 'paid'});
+      batch.update(targetRef, {'status': TargetStatus.paid});
 
       await batch.commit();
 
@@ -1254,14 +1039,15 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           labelText: 'Nominal Bonus (Rp)',
-                          hintText: 'Contoh: 1000000',
+                          hintText:
+                              'Minimal ${BonusConfig.minimumAmountFormatted}',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.money),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Masukkan nominal bonus sesuai kebijakan perusahaan",
+                        "Minimal bonus: ${BonusConfig.minimumAmountFormatted}. Sesuaikan dengan kebijakan perusahaan.",
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -1574,57 +1360,6 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ===============================================================
-// =============== PDF PREVIEW PAGE ==============================
-// ===============================================================
-
-class PdfPreviewPage extends StatelessWidget {
-  final Uint8List pdfBytes;
-  final String title;
-  final String filename;
-
-  const PdfPreviewPage({
-    Key? key,
-    required this.pdfBytes,
-    required this.title,
-    required this.filename,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: Colors.red[700],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'Bagikan PDF',
-            onPressed: () async {
-              await Printing.sharePdf(bytes: pdfBytes, filename: filename);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            tooltip: 'Print PDF',
-            onPressed: () async {
-              await Printing.layoutPdf(onLayout: (format) => pdfBytes);
-            },
-          ),
-        ],
-      ),
-      body: PdfPreview(
-        build: (format) => pdfBytes,
-        allowSharing: true,
-        allowPrinting: true,
-        canChangePageFormat: false,
-        canChangeOrientation: false,
-        pdfFileName: filename,
-      ),
     );
   }
 }

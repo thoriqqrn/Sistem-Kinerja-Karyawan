@@ -200,39 +200,196 @@ class _EvaluationDetailPageState extends State<EvaluationDetailPage> {
 
     if (spLevel == null) return;
 
-    // Konfirmasi
-    final confirm = await _showConfirmDialog(
-      "Konfirmasi $spLevel",
-      "Apakah Anda yakin ingin memberikan $spLevel kepada karyawan ini?",
-    );
-    if (!confirm) return;
-
-    await _processSP(spLevel);
+    // Tampilkan dialog untuk edit catatan SP
+    await _showSPReasonDialog(spLevel);
   }
 
-  Future<void> _processSP(String spLevel) async {
+  /// Dialog untuk HR menulis/edit alasan SP
+  Future<void> _showSPReasonDialog(String spLevel) async {
+    final spReasonController = TextEditingController();
+
+    // Template default berdasarkan level SP
+    String defaultMessage;
+    switch (spLevel) {
+      case 'SP1':
+        defaultMessage =
+            'Kinerja Anda di bawah standar. Harap segera melakukan perbaikan.';
+        break;
+      case 'SP2':
+        defaultMessage =
+            'Peringatan kedua. Kinerja masih belum memenuhi standar perusahaan.';
+        break;
+      case 'SP3':
+        defaultMessage =
+            'Peringatan terakhir. Perbaikan harus segera dilakukan atau akan ada konsekuensi lebih lanjut.';
+        break;
+      default:
+        defaultMessage = 'Kinerja perlu ditingkatkan.';
+    }
+
+    // Set template default
+    spReasonController.text = defaultMessage;
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.edit_note, color: Colors.red[700], size: 28),
+            const SizedBox(width: 12),
+            Text("Catatan $spLevel"),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orange[800]),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        "Anda bisa mengedit alasan sesuai kebutuhan",
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Alasan/Catatan Surat Peringatan:",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: spReasonController,
+                decoration: InputDecoration(
+                  hintText: "Tulis alasan pemberian SP...",
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  helperText: "Minimal 20 karakter, maksimal 500 karakter",
+                  helperStyle: const TextStyle(fontSize: 11),
+                ),
+                maxLines: 6,
+                maxLength: 500,
+              ),
+              const SizedBox(height: 8),
+              // Preview box
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.visibility,
+                          size: 16,
+                          color: Colors.red[700],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Preview:",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 12),
+                    Text(
+                      spReasonController.text.isNotEmpty
+                          ? spReasonController.text
+                          : defaultMessage,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.send, size: 18),
+            label: Text("Kirim $spLevel"),
+            onPressed: () async {
+              final reason = spReasonController.text.trim();
+
+              // Validasi panjang catatan
+              if (reason.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Catatan tidak boleh kosong"),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
+              if (reason.length < 20) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Catatan minimal 20 karakter"),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
+              Navigator.pop(context);
+
+              // Konfirmasi final
+              final confirm = await _showConfirmDialog(
+                "Konfirmasi $spLevel",
+                "Apakah Anda yakin ingin memberikan $spLevel dengan catatan ini?",
+              );
+
+              if (confirm) {
+                await _processSP(spLevel, reason);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processSP(String spLevel, String customMessage) async {
     setState(() => _isLoading = true);
     try {
       final firestore = FirebaseFirestore.instance;
       final currentUser = FirebaseAuth.instance.currentUser;
-
-      String message;
-      switch (spLevel) {
-        case 'SP1':
-          message =
-              'Kinerja Anda di bawah standar. Harap segera melakukan perbaikan.';
-          break;
-        case 'SP2':
-          message =
-              'Peringatan kedua. Kinerja masih belum memenuhi standar perusahaan.';
-          break;
-        case 'SP3':
-          message =
-              'Peringatan terakhir. Perbaikan harus segera dilakukan atau akan ada konsekuensi lebih lanjut.';
-          break;
-        default:
-          message = 'Kinerja perlu ditingkatkan.';
-      }
 
       // 1️⃣ Update evaluasi di performance_submissions
       await firestore
@@ -242,7 +399,7 @@ class _EvaluationDetailPageState extends State<EvaluationDetailPage> {
             'status': 'evaluated',
             'evaluationResult': {
               'status': spLevel,
-              'message': message,
+              'message': customMessage,
               'evaluatedBy': currentUser?.uid ?? 'unknown',
               'evaluatedAt': Timestamp.now(),
             },
@@ -260,13 +417,15 @@ class _EvaluationDetailPageState extends State<EvaluationDetailPage> {
         'submissionId': widget.submissionId,
         'targetId': widget.submissionData['targetId'],
         'level': spLevel,
-        'message': message,
+        'message': customMessage,
         'issuedBy': currentUser?.uid ?? 'unknown',
         'issuedAt': Timestamp.now(),
         'status': 'active',
       });
 
-      _showSuccessAndGoBack("✅ Status $spLevel berhasil dicatat.");
+      _showSuccessAndGoBack(
+        "✅ $spLevel berhasil dikirim dengan catatan khusus.",
+      );
     } catch (e) {
       _showError("❌ Gagal memberi SP: $e");
     } finally {

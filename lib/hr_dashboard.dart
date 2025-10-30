@@ -6,6 +6,7 @@ import 'manage_employees_page.dart';
 import 'login_page.dart'; // <-- IMPORT HALAMAN LOGIN
 import 'create_target_page.dart'; // <-- IMPORT HALAMAN YANG AKAN KITA BUAT
 import 'evaluate_submissions_page.dart';
+import 'hr_monitor_progress_page.dart';
 
 class HRDashboard extends StatelessWidget {
   const HRDashboard({super.key});
@@ -98,6 +99,25 @@ class HRDashboard extends StatelessWidget {
                   textStyle: TextStyle(fontSize: 16),
                   backgroundColor:
                       Colors.orange, // Beri warna berbeda agar menonjol
+                ),
+              ),
+              SizedBox(height: 16), // Beri jarak
+              // TOMBOL BARU UNTUK MONITOR PROGRESS
+              ElevatedButton.icon(
+                icon: Icon(Icons.analytics),
+                label: Text('Monitor Progress Karyawan'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HRMonitorProgressPage(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  textStyle: TextStyle(fontSize: 16),
+                  backgroundColor: Colors.green[700],
                 ),
               ),
             ],

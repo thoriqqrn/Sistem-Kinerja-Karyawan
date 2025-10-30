@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'dart:typed_data';
 import 'utils/finance_utils.dart';
 import 'utils/constants.dart';
 import 'widgets/pdf_preview_page.dart';
@@ -193,7 +194,7 @@ class BonusReportByEmployee extends StatelessWidget {
   Query<Map<String, dynamic>> _getQuery() {
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('bonus_requests')
-        .where('status', isEqualTo: BonusStatus.paid);
+        .where('status', isEqualTo: 'paid');
 
     // Apply date filter
     if (period == 'custom' && startDate != null && endDate != null) {
@@ -316,7 +317,7 @@ class BonusReportByEmployee extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    FinanceUtils.formatCurrency(totalBonus),
+                    _formatCurrency(totalBonus),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -379,7 +380,7 @@ class BonusReportByEmployee extends StatelessWidget {
                           ),
                           subtitle: Text("${bonuses.length} bonus diterima"),
                           trailing: Text(
-                            FinanceUtils.formatCurrency(totalEmployeeBonus),
+                            _formatCurrency(totalEmployeeBonus),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -396,9 +397,7 @@ class BonusReportByEmployee extends StatelessWidget {
                                 size: 20,
                               ),
                               title: Text(
-                                FinanceUtils.formatCurrency(
-                                  bonus['bonusAmount'],
-                                ),
+                                _formatCurrency(bonus['bonusAmount']),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -419,7 +418,49 @@ class BonusReportByEmployee extends StatelessWidget {
                                       ),
                                       color: Colors.red[700],
                                       onPressed: () async {
-                                        await _showInvoice(context, bonus);
+                                        // Generate invoice untuk bonus ini
+                                        try {
+                                          // Fetch data lengkap
+                                          final employeeDoc = await FirebaseFirestore.instance
+                                              .collection('users')
+                                              .doc(bonus['employeeId'])
+                                              .get();
+                                          
+                                          final submissionDoc = await FirebaseFirestore.instance
+                                              .collection('performance_submissions')
+                                              .doc(bonus['submissionId'])
+                                              .get();
+                                          
+                                          final targetDoc = await FirebaseFirestore.instance
+                                              .collection('targets')
+                                              .doc(bonus['targetId'])
+                                              .get();
+
+                                          final pdfBytes = await _generatePdfFromData(
+                                            requestData: bonus,
+                                            employeeName: employeeDoc.data()?['fullName'] ?? 'Unknown',
+                                            submissionData: submissionDoc.data() ?? {},
+                                            targetData: targetDoc.data() ?? {},
+                                          );
+
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PdfPreviewPage(
+                                                pdfBytes: pdfBytes,
+                                                title: 'Invoice Bonus',
+                                                filename: 'invoice_${bonus['id']}.pdf',
+                                              ),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text("Error: $e"),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
                                       },
                                     )
                                   : null,
@@ -438,52 +479,127 @@ class BonusReportByEmployee extends StatelessWidget {
     );
   }
 
-  Future<void> _showInvoice(
-    BuildContext context,
-    Map<String, dynamic> bonus,
-  ) async {
-    try {
-      final employeeDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(bonus['employeeId'])
-          .get();
+  Future<Uint8List> _generatePdfFromData({
+    required Map<String, dynamic> requestData,
+    required String employeeName,
+    required Map<String, dynamic> submissionData,
+    required Map<String, dynamic> targetData,
+  }) async {
+    final pdf = pw.Document();
+    final bonusAmount = requestData['bonusAmount'] ?? 0;
+    final invoiceNumber = 'INV-${(requestData['paidAt'] as Timestamp?)?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch}';
+    final paidAt = (requestData['paidAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
-      final submissionDoc = await FirebaseFirestore.instance
-          .collection('performance_submissions')
-          .doc(bonus['submissionId'])
-          .get();
-
-      final targetDoc = await FirebaseFirestore.instance
-          .collection('targets')
-          .doc(bonus['targetId'])
-          .get();
-
-      final pdfBytes = await FinanceUtils.generateInvoicePdf(
-        requestData: bonus,
-        employeeName: employeeDoc.data()?['fullName'] ?? 'Unknown',
-        submissionData: submissionDoc.data() ?? {},
-        targetData: targetDoc.data() ?? {},
-      );
-
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PdfPreviewPage(
-              pdfBytes: pdfBytes,
-              title: 'Invoice Bonus',
-              filename: 'invoice_${bonus['id']}.pdf',
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(32),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('PT NAMA PERUSAHAAN', 
+                          style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                        pw.SizedBox(height: 4),
+                        pw.Text('Invoice Bonus Karyawan', style: const pw.TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Text('INVOICE', 
+                          style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blue700)),
+                        pw.SizedBox(height: 4),
+                        pw.Text(invoiceNumber, style: const pw.TextStyle(fontSize: 10)),
+                      ],
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 32),
+                pw.Divider(thickness: 2),
+                pw.SizedBox(height: 24),
+                pw.Text('Kepada:', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 8),
+                pw.Text(employeeName, style: const pw.TextStyle(fontSize: 16)),
+                pw.SizedBox(height: 4),
+                pw.Text('ID Karyawan: ${requestData['employeeId']}', style: const pw.TextStyle(fontSize: 10)),
+                pw.SizedBox(height: 32),
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey200,
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('Detail Bonus', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                      pw.SizedBox(height: 12),
+                      _buildPdfRow('Target', targetData['title'] ?? 'N/A'),
+                      _buildPdfRow('Periode', targetData['period'] ?? 'N/A'),
+                      _buildPdfRow('Pencapaian', 
+                        '${submissionData['achievedValue']} / ${targetData['targetValue']} ${targetData['unit'] ?? ''}'),
+                      pw.SizedBox(height: 8),
+                      pw.Divider(),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('TOTAL BONUS:', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                          pw.Text(_formatCurrency(bonusAmount), 
+                            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.green700)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 32),
+                pw.Text('Tanggal Pencairan: ${DateFormat('dd MMMM yyyy', 'id_ID').format(paidAt)}', 
+                  style: const pw.TextStyle(fontSize: 10)),
+                pw.Spacer(),
+                pw.Divider(),
+                pw.SizedBox(height: 8),
+                pw.Center(
+                  child: pw.Text('Terima kasih atas kontribusi Anda!', 
+                    style: pw.TextStyle(fontSize: 12, fontStyle: pw.FontStyle.italic)),
+                ),
+              ],
             ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
-        );
-      }
-    }
+          );
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  pw.Widget _buildPdfRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text('$label:', style: const pw.TextStyle(fontSize: 11)),
+          pw.Text(value, style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  String _formatCurrency(num amount) {
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+    return formatter.format(amount);
   }
 }
 
@@ -506,50 +622,29 @@ class BonusReportByPeriod extends StatelessWidget {
   Query<Map<String, dynamic>> _getQuery() {
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('bonus_requests')
-        .where('status', isEqualTo: BonusStatus.paid)
+        .where('status', isEqualTo: 'paid')
         .orderBy('paidAt', descending: true);
 
     if (period == 'custom' && startDate != null && endDate != null) {
       query = query
-          .where(
-            'paidAt',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate!),
-          )
+          .where('paidAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate!))
           .where('paidAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate!));
     } else if (period == 'thisMonth') {
       final now = DateTime.now();
       final firstDay = DateTime(now.year, now.month, 1);
-      query = query.where(
-        'paidAt',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(firstDay),
-      );
+      query = query.where('paidAt', isGreaterThanOrEqualTo: Timestamp.fromDate(firstDay));
     } else if (period == 'lastMonth') {
       final now = DateTime.now();
       final firstDayThisMonth = DateTime(now.year, now.month, 1);
-      final lastDayLastMonth = firstDayThisMonth.subtract(
-        const Duration(days: 1),
-      );
-      final firstDayLastMonth = DateTime(
-        lastDayLastMonth.year,
-        lastDayLastMonth.month,
-        1,
-      );
+      final lastDayLastMonth = firstDayThisMonth.subtract(const Duration(days: 1));
+      final firstDayLastMonth = DateTime(lastDayLastMonth.year, lastDayLastMonth.month, 1);
       query = query
-          .where(
-            'paidAt',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(firstDayLastMonth),
-          )
-          .where(
-            'paidAt',
-            isLessThanOrEqualTo: Timestamp.fromDate(lastDayLastMonth),
-          );
+          .where('paidAt', isGreaterThanOrEqualTo: Timestamp.fromDate(firstDayLastMonth))
+          .where('paidAt', isLessThanOrEqualTo: Timestamp.fromDate(lastDayLastMonth));
     } else if (period == 'thisYear') {
       final now = DateTime.now();
       final firstDay = DateTime(now.year, 1, 1);
-      query = query.where(
-        'paidAt',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(firstDay),
-      );
+      query = query.where('paidAt', isGreaterThanOrEqualTo: Timestamp.fromDate(firstDay));
     }
 
     return query;
@@ -606,42 +701,22 @@ class BonusReportByPeriod extends StatelessWidget {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue[700]!, Colors.blue[500]!],
-                ),
+                gradient: LinearGradient(colors: [Colors.blue[700]!, Colors.blue[500]!]),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
+                  BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
                 children: [
-                  const Text(
-                    "Total Bonus Periode Ini",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  const Text("Total Bonus Periode Ini",
+                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
-                  Text(
-                    FinanceUtils.formatCurrency(totalBonus),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(_formatCurrency(totalBonus),
+                      style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text(
-                    "${snapshot.data!.docs.length} Transaksi",
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
+                  Text("${snapshot.data!.docs.length} Transaksi",
+                      style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 ],
               ),
             ),
@@ -652,10 +727,7 @@ class BonusReportByPeriod extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final monthKey = groupedByMonth.keys.elementAt(index);
                   final bonuses = groupedByMonth[monthKey]!;
-                  final monthTotal = bonuses.fold<int>(
-                    0,
-                    (sum, b) => sum + (b['bonusAmount'] as int? ?? 0),
-                  );
+                  final monthTotal = bonuses.fold<int>(0, (sum, b) => sum + (b['bonusAmount'] as int? ?? 0));
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -663,81 +735,79 @@ class BonusReportByPeriod extends StatelessWidget {
                     child: ExpansionTile(
                       leading: CircleAvatar(
                         backgroundColor: Colors.blue[100],
-                        child: Icon(
-                          Icons.calendar_month,
-                          color: Colors.blue[700],
-                        ),
+                        child: Icon(Icons.calendar_month, color: Colors.blue[700]),
                       ),
-                      title: Text(
-                        monthKey,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      title: Text(monthKey, style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text("${bonuses.length} transaksi"),
-                      trailing: Text(
-                        FinanceUtils.formatCurrency(monthTotal),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[700],
-                        ),
-                      ),
+                      trailing: Text(_formatCurrency(monthTotal),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue[700])),
                       children: bonuses.map((bonus) {
                         return FutureBuilder<DocumentSnapshot>(
-                          future: FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(bonus['employeeId'])
-                              .get(),
+                          future: FirebaseFirestore.instance.collection('users').doc(bonus['employeeId']).get(),
                           builder: (context, empSnapshot) {
-                            final employeeName =
-                                empSnapshot.data?.data() != null
-                                ? (empSnapshot.data!.data()
-                                      as Map<String, dynamic>)['fullName']
+                            final employeeName = empSnapshot.data?.data() != null
+                                ? (empSnapshot.data!.data() as Map<String, dynamic>)['fullName']
                                 : 'Loading...';
                             final paidAt = bonus['paidAt'] as Timestamp?;
 
                             return ListTile(
                               dense: true,
-                              leading: const CircleAvatar(
-                                radius: 16,
-                                child: Icon(Icons.person, size: 16),
-                              ),
-                              title: Text(
-                                employeeName.toString(),
-                                style: const TextStyle(fontSize: 14),
-                              ),
+                              leading: const CircleAvatar(radius: 16, child: Icon(Icons.person, size: 16)),
+                              title: Text(employeeName.toString(), style: const TextStyle(fontSize: 14)),
                               subtitle: Text(
-                                paidAt != null
-                                    ? DateFormat(
-                                        'dd MMM yyyy, HH:mm',
-                                        'id_ID',
-                                      ).format(paidAt.toDate())
-                                    : 'N/A',
-                                style: const TextStyle(fontSize: 11),
-                              ),
+                                  paidAt != null
+                                      ? DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(paidAt.toDate())
+                                      : 'N/A',
+                                  style: const TextStyle(fontSize: 11)),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    FinanceUtils.formatCurrency(
-                                      bonus['bonusAmount'],
-                                    ),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
+                                  Text(_formatCurrency(bonus['bonusAmount']),
+                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                                   if (bonus['invoiceGenerated'] == true) ...[
                                     const SizedBox(width: 8),
                                     IconButton(
-                                      icon: const Icon(
-                                        Icons.picture_as_pdf,
-                                        size: 18,
-                                      ),
+                                      icon: const Icon(Icons.picture_as_pdf, size: 18),
                                       color: Colors.red[700],
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
                                       onPressed: () async {
-                                        await _showInvoice(context, bonus);
+                                        try {
+                                          final employeeDoc = await FirebaseFirestore.instance
+                                              .collection('users')
+                                              .doc(bonus['employeeId'])
+                                              .get();
+                                          final submissionDoc = await FirebaseFirestore.instance
+                                              .collection('performance_submissions')
+                                              .doc(bonus['submissionId'])
+                                              .get();
+                                          final targetDoc = await FirebaseFirestore.instance
+                                              .collection('targets')
+                                              .doc(bonus['targetId'])
+                                              .get();
+
+                                          final pdfBytes = await _generatePdfFromData(
+                                            requestData: bonus,
+                                            employeeName: employeeDoc.data()?['fullName'] ?? 'Unknown',
+                                            submissionData: submissionDoc.data() ?? {},
+                                            targetData: targetDoc.data() ?? {},
+                                          );
+
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PdfPreviewPage(
+                                                pdfBytes: pdfBytes,
+                                                title: 'Invoice Bonus',
+                                                filename: 'invoice_${bonus['id']}.pdf',
+                                              ),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+                                          );
+                                        }
                                       },
                                     ),
                                   ],
@@ -758,49 +828,173 @@ class BonusReportByPeriod extends StatelessWidget {
     );
   }
 
-  Future<void> _showInvoice(
-    BuildContext context,
-    Map<String, dynamic> bonus,
-  ) async {
-    try {
-      final employeeDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(bonus['employeeId'])
-          .get();
-      final submissionDoc = await FirebaseFirestore.instance
-          .collection('performance_submissions')
-          .doc(bonus['submissionId'])
-          .get();
-      final targetDoc = await FirebaseFirestore.instance
-          .collection('targets')
-          .doc(bonus['targetId'])
-          .get();
+  Future<Uint8List> _generatePdfFromData({
+    required Map<String, dynamic> requestData,
+    required String employeeName,
+    required Map<String, dynamic> submissionData,
+    required Map<String, dynamic> targetData,
+  }) async {
+    final pdf = pw.Document();
+    final bonusAmount = requestData['bonusAmount'] ?? 0;
+    final invoiceNumber = 'INV-${(requestData['paidAt'] as Timestamp?)?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch}';
+    final paidAt = (requestData['paidAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
-      final pdfBytes = await FinanceUtils.generateInvoicePdf(
-        requestData: bonus,
-        employeeName: employeeDoc.data()?['fullName'] ?? 'Unknown',
-        submissionData: submissionDoc.data() ?? {},
-        targetData: targetDoc.data() ?? {},
-      );
-
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PdfPreviewPage(
-              pdfBytes: pdfBytes,
-              title: 'Invoice Bonus',
-              filename: 'invoice_${bonus['id']}.pdf',
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(32),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('PT NAMA PERUSAHAAN', 
+                          style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                        pw.SizedBox(height: 4),
+                        pw.Text('Invoice Bonus Karyawan', style: const pw.TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Text('INVOICE', 
+                          style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blue700)),
+                        pw.SizedBox(height: 4),
+                        pw.Text(invoiceNumber, style: const pw.TextStyle(fontSize: 10)),
+                      ],
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 32),
+                pw.Divider(thickness: 2),
+                pw.SizedBox(height: 24),
+                pw.Text('Kepada:', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 8),
+                pw.Text(employeeName, style: const pw.TextStyle(fontSize: 16)),
+                pw.SizedBox(height: 4),
+                pw.Text('ID Karyawan: ${requestData['employeeId']}', style: const pw.TextStyle(fontSize: 10)),
+                pw.SizedBox(height: 32),
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey200,
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('Detail Bonus', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                      pw.SizedBox(height: 12),
+                      _buildPdfRow('Target', targetData['title'] ?? 'N/A'),
+                      _buildPdfRow('Periode', targetData['period'] ?? 'N/A'),
+                      _buildPdfRow('Pencapaian', 
+                        '${submissionData['achievedValue']} / ${targetData['targetValue']} ${targetData['unit'] ?? ''}'),
+                      pw.SizedBox(height: 8),
+                      pw.Divider(),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('TOTAL BONUS:', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                          pw.Text(_formatCurrency(bonusAmount), 
+                            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.green700)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 32),
+                pw.Text('Tanggal Pencairan: ${DateFormat('dd MMMM yyyy', 'id_ID').format(paidAt)}', 
+                  style: const pw.TextStyle(fontSize: 10)),
+                pw.Spacer(),
+                pw.Divider(),
+                pw.SizedBox(height: 8),
+                pw.Center(
+                  child: pw.Text('Terima kasih atas kontribusi Anda!', 
+                    style: pw.TextStyle(fontSize: 12, fontStyle: pw.FontStyle.italic)),
+                ),
+              ],
             ),
+          );
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  pw.Widget _buildPdfRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text('$label:', style: const pw.TextStyle(fontSize: 11)),
+          pw.Text(value, style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  String _formatCurrency(num amount) {
+    return FinanceUtils.formatCurrency(amount);
+  }
+}
+}
+
+// ===============================================================
+// =============== PDF PREVIEW PAGE ==============================
+// ===============================================================
+
+class PdfPreviewPage extends StatelessWidget {
+  final Uint8List pdfBytes;
+  final String title;
+  final String filename;
+
+  const PdfPreviewPage({
+    Key? key,
+    required this.pdfBytes,
+    required this.title,
+    required this.filename,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: Colors.red[700],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Bagikan PDF',
+            onPressed: () async {
+              await Printing.sharePdf(bytes: pdfBytes, filename: filename);
+            },
           ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
-        );
-      }
-    }
+          IconButton(
+            icon: const Icon(Icons.print),
+            tooltip: 'Print PDF',
+            onPressed: () async {
+              await Printing.layoutPdf(onLayout: (format) => pdfBytes);
+            },
+          ),
+        ],
+      ),
+      body: PdfPreview(
+        build: (format) => pdfBytes,
+        allowSharing: true,
+        allowPrinting: true,
+        canChangePageFormat: false,
+        canChangeOrientation: false,
+        pdfFileName: filename,
+      ),
+    );
   }
 }

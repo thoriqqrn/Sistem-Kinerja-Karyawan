@@ -118,6 +118,8 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
         59,
       );
 
+      final now = Timestamp.now();
+
       await FirebaseFirestore.instance.collection('targets').add({
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
@@ -127,7 +129,8 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
         'employeeId': _selectedEmployeeId,
         'deadline': Timestamp.fromDate(deadlineEndOfDay),
         'status': 'active',
-        'createdAt': Timestamp.now(),
+        'createdAt': now,
+        'startDate': now, // Untuk sorting di employee_targets_page
       });
 
       if (mounted) {
