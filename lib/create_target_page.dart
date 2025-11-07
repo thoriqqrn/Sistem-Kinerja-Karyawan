@@ -15,10 +15,10 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _targetValueController = TextEditingController();
-  final _unitController = TextEditingController();
 
   String? _selectedEmployeeId;
   String? _selectedPeriod;
+  String? _selectedUnit;
   DateTime? _selectedDeadline;
 
   bool _isLoading = false;
@@ -124,7 +124,7 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
         'targetValue': int.tryParse(_targetValueController.text.trim()) ?? 0,
-        'unit': _unitController.text.trim(),
+        'unit': _selectedUnit ?? 'Pcs',
         'period': _selectedPeriod,
         'employeeId': _selectedEmployeeId,
         'deadline': Timestamp.fromDate(deadlineEndOfDay),
@@ -183,7 +183,6 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
     _titleController.dispose();
     _descriptionController.dispose();
     _targetValueController.dispose();
-    _unitController.dispose();
     super.dispose();
   }
 
@@ -501,17 +500,11 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
                           ),
                         ],
                       ),
-                      child: TextFormField(
-                        controller: _unitController,
-                        style: TextStyle(
-                          color: Color(0xFF2D3142),
-                          fontSize: 15,
-                        ),
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedUnit,
                         decoration: InputDecoration(
                           labelText: 'Satuan',
-                          hintText: 'unit',
                           labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
-                          hintStyle: TextStyle(color: Color(0xFFD1D5DB)),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: Color(0xFFE8E8E8)),
@@ -530,7 +523,17 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
                           filled: true,
                           fillColor: Colors.white,
                         ),
-                        validator: (value) => value!.isEmpty ? 'Wajib' : null,
+                        items: [
+                          DropdownMenuItem(value: 'Pcs', child: Text('Pcs')),
+                          DropdownMenuItem(value: 'Box', child: Text('Box')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedUnit = value;
+                          });
+                        },
+                        validator: (value) =>
+                            value == null ? 'Pilih satuan' : null,
                       ),
                     ),
                   ),

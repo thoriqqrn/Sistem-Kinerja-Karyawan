@@ -37,7 +37,7 @@ android {
         applicationId = "com.example.sistem_kinerja"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Update ke minimal 23 untuk support printing package
+        minSdk = flutter.minSdkVersion  // Update ke minimal 23 untuk support printing package
         targetSdk = 34  // Update ke 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName

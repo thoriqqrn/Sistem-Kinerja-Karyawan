@@ -26,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
   // Variabel untuk mengontrol status loading
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   // Fungsi untuk menampilkan pesan error atau informasi
   void _showMessage(String message) {
@@ -321,7 +322,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       child: TextField(
                         controller: _passwordController,
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         style: TextStyle(
                           fontSize: 15,
                           color: Color(0xFF2D3142),
@@ -336,6 +337,23 @@ class _LoginPageState extends State<LoginPage> {
                             Icons.lock_outline,
                             color: Color(0xFFFF6B9D),
                             size: 22,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_rounded
+                                  : Icons.visibility_rounded,
+                              color: Color(0xFF9CA3AF),
+                              size: 22,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                            tooltip: _obscurePassword
+                                ? 'Tampilkan Password'
+                                : 'Sembunyikan Password',
                           ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(
