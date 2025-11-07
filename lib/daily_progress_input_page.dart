@@ -21,6 +21,7 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
   final _notesController = TextEditingController();
+  final _unitCodeController = TextEditingController();
   final currentUserUid = FirebaseAuth.instance.currentUser!.uid;
 
   bool _isLoading = false;
@@ -39,6 +40,7 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
   void dispose() {
     _valueController.dispose();
     _notesController.dispose();
+    _unitCodeController.dispose();
     super.dispose();
   }
 
@@ -96,14 +98,19 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
 
     final dailyValue = int.parse(_valueController.text);
     final notes = _notesController.text.trim();
+    final unitCode = _unitCodeController.text.trim().toUpperCase();
 
-    // Validasi: total tidak boleh melebihi target
+    // Check if will exceed target
     final targetValue = widget.targetData['targetValue'] as int;
-    if (_totalProgress + dailyValue > targetValue && !_hasInputToday) {
-      _showError(
-        'Total progress (${_totalProgress + dailyValue}) akan melebihi target ($targetValue)',
+    final newTotal = _totalProgress + dailyValue;
+
+    // Jika melebihi target dan bukan update input hari ini, tampilkan konfirmasi
+    if (newTotal > targetValue && !_hasInputToday) {
+      final shouldContinue = await _showExceedTargetDialog(
+        newTotal,
+        targetValue,
       );
-      return;
+      if (!shouldContinue) return;
     }
 
     setState(() => _isLoading = true);
@@ -119,6 +126,7 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
             .update({
               'dailyValue': dailyValue,
               'notes': notes,
+              'unitCode': unitCode,
               'updatedAt': Timestamp.now(),
             });
 
@@ -138,6 +146,7 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
           'date': Timestamp.fromDate(DateTime(now.year, now.month, now.day)),
           'dailyValue': dailyValue,
           'notes': notes,
+          'unitCode': unitCode,
           'createdAt': Timestamp.now(),
         });
 
@@ -167,6 +176,151 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
     );
   }
 
+  Future<bool> _showExceedTargetDialog(int newTotal, int targetValue) async {
+    final unit = widget.targetData['unit'] ?? '';
+    final excess = newTotal - targetValue;
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFB74D).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Color(0xFFFFB74D),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Melebihi Target',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2D3142),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8F9FA),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE8E8E8)),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildInfoRow(
+                          'Target',
+                          '$targetValue $unit',
+                          const Color(0xFF6B7280),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoRow(
+                          'Total Progress',
+                          '$newTotal $unit',
+                          const Color(0xFFFF6B9D),
+                        ),
+                        const Divider(height: 16, color: Color(0xFFE8E8E8)),
+                        _buildInfoRow(
+                          'Kelebihan',
+                          '+$excess $unit',
+                          const Color(0xFFFFB74D),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Progress Anda akan melebihi target yang ditetapkan. Apakah Anda yakin ingin melanjutkan?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6B7280),
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFB74D),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Lanjutkan',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Widget _buildInfoRow(String label, String value, Color valueColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: valueColor,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final targetValue = widget.targetData['targetValue'] as int;
@@ -176,6 +330,10 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
         ? (_totalProgress / targetValue) * 100
         : 0;
 
+    // Check if target exceeded
+    final isExceeded = _totalProgress > targetValue;
+    final excess = isExceeded ? _totalProgress - targetValue : 0;
+
     // Hitung sisa hari
     final deadline = (widget.targetData['deadline'] as Timestamp?)?.toDate();
     int remainingDays = 0;
@@ -183,7 +341,7 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
       remainingDays = deadline.difference(DateTime.now()).inDays;
     }
 
-    final dailyTarget = remainingDays > 0
+    final dailyTarget = remainingDays > 0 && !isExceeded
         ? (remaining / remainingDays).ceil()
         : 0;
 
@@ -324,25 +482,62 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                           color: Color(0xFF2D3142),
                         ),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                      Row(
+                        children: [
+                          if (isExceeded) ...[
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF4CAF50),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Target Tercapai!',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                          ],
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isExceeded
+                                    ? [Color(0xFF4CAF50), Color(0xFF66BB6A)]
+                                    : [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${percentage.toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${percentage.toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
@@ -350,11 +545,13 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
-                      value: percentage / 100,
+                      value: isExceeded ? 1.0 : (percentage / 100),
                       minHeight: 10,
                       backgroundColor: Color(0xFFF0F0F0),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        percentage >= 75
+                        isExceeded
+                            ? Color(0xFF4CAF50)
+                            : percentage >= 75
                             ? Color(0xFF4CAF50)
                             : percentage >= 50
                             ? Color(0xFFFF6B9D)
@@ -371,15 +568,15 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                       _buildStatItem(
                         'Tercapai',
                         '$_totalProgress $unit',
-                        Color(0xFFFF6B9D),
+                        isExceeded ? Color(0xFF4CAF50) : Color(0xFFFF6B9D),
                       ),
                       Container(height: 40, width: 1, color: Color(0xFFE8E8E8)),
                       _buildStatItem(
-                        'Sisa',
-                        '$remaining $unit',
-                        Color(0xFFFFB74D),
+                        isExceeded ? 'Kelebihan' : 'Sisa',
+                        '${isExceeded ? excess : remaining} $unit',
+                        isExceeded ? Color(0xFF4CAF50) : Color(0xFFFFB74D),
                       ),
-                      if (remainingDays > 0) ...[
+                      if (remainingDays > 0 && !isExceeded) ...[
                         Container(
                           height: 40,
                           width: 1,
@@ -393,7 +590,49 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                       ],
                     ],
                   ),
-                  if (remainingDays > 0)
+                  if (isExceeded)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Color(0xFF4CAF50).withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF4CAF50),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.celebration_rounded,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Selamat! Target sudah tercapai dan melebihi $excess $unit!',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF2D3142),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (remainingDays > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: Container(
@@ -529,10 +768,6 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                         if (intValue == null || intValue <= 0) {
                           return 'Nilai harus lebih dari 0';
                         }
-                        if (!_hasInputToday &&
-                            (_totalProgress + intValue > targetValue)) {
-                          return 'Total akan melebihi target ($targetValue)';
-                        }
                         return null;
                       },
                     ),
@@ -583,6 +818,74 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                         filled: true,
                         fillColor: Colors.white,
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Unit Code Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextFormField(
+                      controller: _unitCodeController,
+                      style: TextStyle(
+                        color: Color(0xFF2D3142),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 1.2,
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: InputDecoration(
+                        labelText: 'Kode Unit Validasi',
+                        hintText: 'Contoh: UNIT001',
+                        labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                        hintStyle: TextStyle(color: Color(0xFFD1D5DB)),
+                        helperText:
+                            'Masukkan kode unit sebagai validasi progress',
+                        helperStyle: TextStyle(
+                          color: Color(0xFF9CA3AF),
+                          fontSize: 12,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.qr_code_2_rounded,
+                          color: Color(0xFFFF6B9D),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Color(0xFFFF6B9D),
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Kode unit harus diisi';
+                        }
+                        if (value.length < 4) {
+                          return 'Kode unit minimal 4 karakter';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -783,6 +1086,7 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
             final date = (data['date'] as Timestamp).toDate();
             final dailyValue = data['dailyValue'] as int;
             final notes = data['notes'] as String?;
+            final unitCode = data['unitCode'] as String?;
             final isToday =
                 DateFormat('dd-MM-yyyy').format(date) ==
                 DateFormat('dd-MM-yyyy').format(DateTime.now());
@@ -880,8 +1184,34 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                       ),
                   ],
                 ),
-                subtitle: notes != null && notes.isNotEmpty
-                    ? Padding(
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (unitCode != null && unitCode.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.qr_code_2_rounded,
+                              size: 12,
+                              color: Color(0xFFFF6B9D),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              unitCode,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2D3142),
+                                fontSize: 12,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (notes != null && notes.isNotEmpty)
+                      Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: Text(
                           notes,
@@ -893,8 +1223,9 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      )
-                    : null,
+                      ),
+                  ],
+                ),
                 trailing: Container(
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(

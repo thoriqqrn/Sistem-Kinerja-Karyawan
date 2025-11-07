@@ -520,9 +520,22 @@ class _EvaluationDetailPageState extends State<EvaluationDetailPage> {
         (widget.submissionData['submissionDate'] as Timestamp?)?.toDate();
 
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Detail Evaluasi"),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Color(0xFF2D3142)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Detail Evaluasi',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -530,228 +543,310 @@ class _EvaluationDetailPageState extends State<EvaluationDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- Card Informasi Karyawan ---
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 30,
-                          child: Icon(Icons.person, size: 30),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Karyawan:",
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                widget.employeeName,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // --- Card Informasi Waktu Pengiriman ---
-            Card(
-              elevation: 2,
-              color: isLate ? Colors.red[50] : Colors.green[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          isLate
-                              ? Icons.warning_amber_rounded
-                              : Icons.check_circle,
-                          color: isLate ? Colors.red[700] : Colors.green[700],
-                          size: 32,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            isLate ? "⚠️ TERLAMBAT" : "✅ TEPAT WAKTU",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isLate
-                                  ? Colors.red[900]
-                                  : Colors.green[900],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 24),
-                    _buildTimeInfo(
-                      icon: Icons.flag,
-                      label: "Deadline",
-                      value: deadline != null
-                          ? _formatDateTime(deadline)
-                          : "Tidak ada",
-                      color: Colors.orange[800]!,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTimeInfo(
-                      icon: Icons.send,
-                      label: "Tanggal Pengiriman",
-                      value: submissionDate != null
-                          ? _formatDateTime(submissionDate)
-                          : "Tidak ada",
-                      color: isLate ? Colors.red[700]! : Colors.green[700]!,
-                    ),
-                    if (isLate &&
-                        deadline != null &&
-                        submissionDate != null) ...[
-                      const SizedBox(height: 12),
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        width: 60,
+                        height: 60,
                         decoration: BoxDecoration(
-                          color: Colors.red[100],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.red[300]!),
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                          ),
+                          shape: BoxShape.circle,
                         ),
-                        child: Row(
+                        child: Icon(
+                          Icons.person_rounded,
+                          size: 30,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.access_time,
-                              color: Colors.red[900],
-                              size: 20,
+                            Text(
+                              "Karyawan:",
+                              style: TextStyle(
+                                color: Color(0xFF9CA3AF),
+                                fontSize: 12,
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _calculateLateDuration(
-                                  deadline,
-                                  submissionDate,
-                                ),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red[900],
-                                ),
+                            SizedBox(height: 4),
+                            Text(
+                              widget.employeeName,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2D3142),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ],
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // --- Card Informasi Waktu Pengiriman ---
+            Container(
+              decoration: BoxDecoration(
+                color: isLate ? Color(0xFFFFEBEE) : Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isLate
+                      ? Color(0xFFEF5350).withOpacity(0.3)
+                      : Color(0xFF4CAF50).withOpacity(0.3),
+                  width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isLate ? Color(0xFFEF5350) : Color(0xFF4CAF50),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          isLate
+                              ? Icons.warning_amber_rounded
+                              : Icons.check_circle_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          isLate ? "⚠️ TERLAMBAT" : "✅ TEPAT WAKTU",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2D3142),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24, color: Color(0xFFE8E8E8)),
+                  _buildTimeInfo(
+                    icon: Icons.flag,
+                    label: "Deadline",
+                    value: deadline != null
+                        ? _formatDateTime(deadline)
+                        : "Tidak ada",
+                    color: Color(0xFFFFB74D),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTimeInfo(
+                    icon: Icons.send_rounded,
+                    label: "Tanggal Pengiriman",
+                    value: submissionDate != null
+                        ? _formatDateTime(submissionDate)
+                        : "Tidak ada",
+                    color: isLate ? Color(0xFFEF5350) : Color(0xFF4CAF50),
+                  ),
+                  if (isLate && deadline != null && submissionDate != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFFEBEE),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Color(0xFFEF5350).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            color: Color(0xFFEF5350),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _calculateLateDuration(deadline, submissionDate),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2D3142),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             const SizedBox(height: 16),
 
             // --- Card Informasi Target ---
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Target Kinerja:",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Target Kinerja:",
+                    style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.targetData['title'] ?? 'Tanpa Judul',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2D3142),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.targetData['title'] ?? 'Tanpa Judul',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF8F9FA),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      "Periode: ${widget.targetData['period'] ?? 'N/A'}",
+                      style: TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Periode: ${widget.targetData['period'] ?? 'N/A'}",
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
 
             // --- Card Perbandingan Hasil ---
-            Card(
-              elevation: 2,
-              color: percentage >= 100 ? Colors.green[50] : Colors.red[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const Text(
-                      "HASIL PENCAPAIAN",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStat(
-                          "TARGET",
-                          "$target ${widget.targetData['unit'] ?? ''}",
-                          Colors.blue,
-                        ),
-                        _buildStat(
-                          "HASIL",
-                          "$achieved ${widget.targetData['unit'] ?? ''}",
-                          Colors.black87,
-                        ),
-                        _buildStat(
-                          "PENCAPAIAN",
-                          "${percentage.toStringAsFixed(1)}%",
-                          percentage >= 100 ? Colors.green : Colors.red,
-                        ),
-                      ],
-                    ),
-                  ],
+            Container(
+              decoration: BoxDecoration(
+                color: percentage >= 100
+                    ? Color(0xFFE8F5E9)
+                    : Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: percentage >= 100
+                      ? Color(0xFF4CAF50).withOpacity(0.3)
+                      : Color(0xFFEF5350).withOpacity(0.3),
+                  width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(
+                    "HASIL PENCAPAIAN",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF9CA3AF),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStat(
+                        "TARGET",
+                        "$target ${widget.targetData['unit'] ?? ''}",
+                        Color(0xFFFF6B9D),
+                      ),
+                      _buildStat(
+                        "HASIL",
+                        "$achieved ${widget.targetData['unit'] ?? ''}",
+                        Color(0xFF2D3142),
+                      ),
+                      _buildStat(
+                        "PENCAPAIAN",
+                        "${percentage.toStringAsFixed(1)}%",
+                        percentage >= 100
+                            ? Color(0xFF4CAF50)
+                            : Color(0xFFEF5350),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
 
             // --- Tombol Aksi HR ---
-            const Text(
+            Text(
               "Tindakan Evaluasi",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2D3142),
+              ),
             ),
             const SizedBox(height: 16),
 
             if (_isLoading)
-              const Center(
+              Center(
                 child: Padding(
                   padding: EdgeInsets.all(32.0),
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFFFF6B9D),
+                    ),
+                  ),
                 ),
               )
             else
@@ -759,53 +854,68 @@ class _EvaluationDetailPageState extends State<EvaluationDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.card_giftcard, color: Colors.white),
-                    label: const Text(
+                    icon: Icon(
+                      Icons.card_giftcard_rounded,
+                      color: Colors.white,
+                    ),
+                    label: Text(
                       "Ajukan Bonus",
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     onPressed: _giveBonus,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: Color(0xFF4CAF50),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 0,
                     ),
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.feedback, color: Colors.white),
-                    label: const Text(
+                    icon: Icon(Icons.feedback_rounded, color: Colors.white),
+                    label: Text(
                       "Beri Feedback",
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     onPressed: _giveFeedback,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Color(0xFFFF6B9D),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 0,
                     ),
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.warning, color: Colors.white),
-                    label: const Text(
+                    icon: Icon(Icons.warning_rounded, color: Colors.white),
+                    label: Text(
                       "Beri Surat Peringatan (SP)",
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     onPressed: _giveSP,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      backgroundColor: Color(0xFFEF5350),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 0,
                     ),
                   ),
                 ],

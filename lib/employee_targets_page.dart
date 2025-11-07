@@ -178,42 +178,181 @@ class TargetCard extends StatelessWidget {
   }) : super(key: key);
 
   Future<void> _showInputHasilDialog(BuildContext context) async {
-    final hasilController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+    // Ambil total progress dari daily_progress
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('daily_progress')
+          .where('targetId', isEqualTo: targetId)
+          .where('employeeId', isEqualTo: currentUserUid)
+          .get();
 
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Input Hasil Kerja"),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: hasilController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Hasil Pencapaian'),
-            validator: (value) => value!.isEmpty ? 'Tidak boleh kosong' : null,
+      int totalProgress = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        totalProgress += (data['dailyValue'] as int? ?? 0);
+      }
+
+      final targetValue = targetData['targetValue'] as int;
+      final unit = targetData['unit'] ?? '';
+
+      // Tampilkan dialog konfirmasi
+      if (context.mounted) {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF4CAF50).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF4CAF50),
+                    size: 28,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Kirim Hasil Final",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2D3142),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Total Pencapaian Anda:",
+                    style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$totalProgress $unit',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        '/ $targetValue $unit',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Color(0xFFE8E8E8)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 20,
+                          color: Color(0xFFFF6B9D),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Apakah Anda yakin ingin mengirim hasil final untuk evaluasi?",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF2D3142),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  "Batal",
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  "Ya, Kirim Final",
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Batal"),
+        );
+
+        if (confirm == true && context.mounted) {
+          _saveSubmission(context, totalProgress);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Color(0xFFEF5350),
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                final achievedValue = int.tryParse(hasilController.text);
-                if (achievedValue != null) {
-                  _saveSubmission(context, achievedValue);
-                  Navigator.pop(context);
-                }
-              }
-            },
-            child: const Text("Simpan"),
-          ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   Future<void> _saveSubmission(BuildContext context, int achievedValue) async {

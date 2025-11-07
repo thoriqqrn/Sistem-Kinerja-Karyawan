@@ -2,7 +2,7 @@
 
 /// Konstanta untuk informasi perusahaan
 class CompanyInfo {
-  static const String name = 'PT NAMA PERUSAHAAN';
+  static const String name = 'PT PINKYSAN';
   static const String address = 'Jl. Contoh No. 123, Jakarta';
   static const String phone = '+62 21 1234567';
   static const String email = 'info@perusahaan.com';
@@ -15,8 +15,8 @@ class CompanyInfo {
 
 /// Konstanta untuk konfigurasi bonus
 class BonusConfig {
-  static const int minimumAmount = 100000; // Rp 100.000
-  static const String minimumAmountFormatted = 'Rp 100.000';
+  static const int minimumAmount = 50000; // Rp 50.000
+  static const String minimumAmountFormatted = 'Rp 50.000';
 }
 
 /// Konstanta untuk status
