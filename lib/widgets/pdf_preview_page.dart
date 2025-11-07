@@ -20,33 +20,74 @@ class PdfPreviewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(title),
-        backgroundColor: Colors.red[700],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'Bagikan PDF',
-            onPressed: () async {
-              await Printing.sharePdf(bytes: pdfBytes, filename: filename);
-            },
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF2D3142),
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
           ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            tooltip: 'Print PDF',
-            onPressed: () async {
-              await Printing.layoutPdf(onLayout: (format) => pdfBytes);
-            },
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF2D3142)),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6B9D).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.share_outlined, color: Color(0xFFFF6B9D)),
+              tooltip: 'Bagikan PDF',
+              onPressed: () async {
+                await Printing.sharePdf(bytes: pdfBytes, filename: filename);
+              },
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6B9D).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.print_outlined, color: Color(0xFFFF6B9D)),
+              tooltip: 'Print PDF',
+              onPressed: () async {
+                await Printing.layoutPdf(onLayout: (format) => pdfBytes);
+              },
+            ),
           ),
         ],
       ),
-      body: PdfPreview(
-        build: (format) => pdfBytes,
-        allowSharing: true,
-        allowPrinting: true,
-        canChangePageFormat: false,
-        canChangeOrientation: false,
-        pdfFileName: filename,
+      body: Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: PdfPreview(
+            build: (format) => pdfBytes,
+            allowSharing: true,
+            allowPrinting: true,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            pdfFileName: filename,
+          ),
+        ),
       ),
     );
   }

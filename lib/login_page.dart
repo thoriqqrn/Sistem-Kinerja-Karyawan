@@ -31,8 +31,18 @@ class _LoginPageState extends State<LoginPage> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red, // Ubah warna sesuai kebutuhan
+        content: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.white),
+            SizedBox(width: 10),
+            Expanded(child: Text(message, style: TextStyle(fontSize: 15))),
+          ],
+        ),
+        backgroundColor: Color(0xFFFF6B9D),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        margin: EdgeInsets.all(20),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       ),
     );
   }
@@ -88,8 +98,10 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _navigateBasedOnRole(String uid) async {
     try {
       // 1. Ambil dokumen pengguna dari koleksi 'users' berdasarkan UID
-      final DocumentSnapshot userDoc =
-          await _firestore.collection('users').doc(uid).get();
+      final DocumentSnapshot userDoc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get();
 
       if (userDoc.exists) {
         // 2. Ambil nilai field 'role' dari dokumen
@@ -97,27 +109,40 @@ class _LoginPageState extends State<LoginPage> {
 
         // 3. Lakukan navigasi berdasarkan nilai 'role'
         // Menggunakan pushReplacement agar pengguna tidak bisa kembali ke halaman login
-        if (mounted) { // Pastikan widget masih ada di tree
-            switch (role) {
-                case 'hr':
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HRDashboard()));
-                    break;
-                case 'finance':
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FinanceDashboard()));
-                    break;
-                case 'employee':
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const EmployeeDashboard()));
-                    break;
-                default:
-                    _showMessage('Peran tidak valid. Hubungi administrator.');
-            }
+        if (mounted) {
+          // Pastikan widget masih ada di tree
+          switch (role) {
+            case 'hr':
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HRDashboard()),
+              );
+              break;
+            case 'finance':
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FinanceDashboard(),
+                ),
+              );
+              break;
+            case 'employee':
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EmployeeDashboard(),
+                ),
+              );
+              break;
+            default:
+              _showMessage('Peran tidak valid. Hubungi administrator.');
+          }
         }
-
       } else {
         _showMessage('Data pengguna tidak ditemukan di database.');
       }
     } catch (e) {
-        _showMessage('Gagal mengambil data peran pengguna.');
+      _showMessage('Gagal mengambil data peran pengguna.');
     }
   }
 
@@ -131,69 +156,247 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Sistem Kinerja Karyawan"),
-        centerTitle: true,
-      ),
-      body: Center(
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Tambahkan logo atau judul di sini jika perlu
-              Text(
-                'Selamat Datang',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              // Top Decorative Pink Wave
+              Stack(
+                children: [
+                  Container(
+                    height: screenHeight * 0.35,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(50),
+                        bottomRight: Radius.circular(50),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 20,
+                    right: -30,
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 80,
+                    right: 40,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  // Content in wave
+                  Container(
+                    height: screenHeight * 0.35,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.business_center_rounded,
+                            size: 70,
+                            color: Colors.white,
+                          ),
+                          SizedBox(height: 15),
+                          Text(
+                            'Welcome Back',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            'Sign in to continue',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white.withOpacity(0.9),
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Silakan login untuk melanjutkan',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              ),
-              const SizedBox(height: 40),
 
-              // TextField untuk Email
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                  border: OutlineInputBorder(),
+              // Form Section
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 40,
                 ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-
-              // TextField untuk Password
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock),
-                  border: OutlineInputBorder(),
-                ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 30),
-
-              // Tombol Login dengan Indikator Loading
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Email Field
+                    Text(
+                      'Email',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2D3142),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Color(0xFFF8F9FA),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: Color(0xFFE8E8E8),
+                          width: 1.5,
                         ),
                       ),
-                      child: const Text('LOGIN', style: TextStyle(fontSize: 16)),
+                      child: TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF2D3142),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Enter your email',
+                          hintStyle: TextStyle(
+                            color: Color(0xFFBDBDBD),
+                            fontSize: 15,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.email_outlined,
+                            color: Color(0xFFFF6B9D),
+                            size: 22,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
+                        ),
+                      ),
                     ),
+
+                    SizedBox(height: 25),
+
+                    // Password Field
+                    Text(
+                      'Password',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2D3142),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Color(0xFFF8F9FA),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: Color(0xFFE8E8E8),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF2D3142),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Enter your password',
+                          hintStyle: TextStyle(
+                            color: Color(0xFFBDBDBD),
+                            fontSize: 15,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.lock_outline,
+                            color: Color(0xFFFF6B9D),
+                            size: 22,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 40),
+
+                    // Sign In Button
+                    _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFFFF6B9D),
+                              ),
+                            ),
+                          )
+                        : SizedBox(
+                            width: double.infinity,
+                            height: 55,
+                            child: ElevatedButton(
+                              onPressed: _login,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFFF6B9D),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              child: Text(
+                                'SIGN IN',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                    SizedBox(height: 30),
+
+                    // Footer
+                    Center(
+                      child: Text(
+                        'Sistem Kinerja Karyawan',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFFBDBDBD),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

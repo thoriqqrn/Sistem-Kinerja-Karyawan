@@ -36,14 +36,43 @@ class _EmployeeTargetsPageState extends State<EmployeeTargetsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Target Kinerja Saya"),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: "Target Aktif"),
-            Tab(text: "Riwayat"),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Color(0xFF2D3142)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Target Kinerja Saya',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(60),
+          child: Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Color(0xFFFF6B9D),
+              unselectedLabelColor: Color(0xFF9CA3AF),
+              indicatorColor: Color(0xFFFF6B9D),
+              indicatorWeight: 3,
+              labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              unselectedLabelStyle: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
+              tabs: const [
+                Tab(text: "Target Aktif"),
+                Tab(text: "Riwayat"),
+              ],
+            ),
+          ),
         ),
       ),
       body: TabBarView(

@@ -21,19 +21,37 @@ class FinanceDashboard extends StatefulWidget {
 
 class _FinanceDashboardState extends State<FinanceDashboard>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  int _currentIndex = 0;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  final List<String> _statusList = ['pending', 'approved', 'paid', 'rejected'];
 
   @override
   void initState() {
     super.initState();
-    // Menambahkan tab 'rejected'
-    _tabController = TabController(length: 4, vsync: this);
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    );
+    _animationController.forward();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _onTabChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    _animationController.reset();
+    _animationController.forward();
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -47,12 +65,38 @@ class _FinanceDashboardState extends State<FinanceDashboard>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Dashboard Keuangan"),
-        backgroundColor: Colors.green[700],
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Color(0xFFFF6B9D).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.account_balance_wallet_rounded,
+                color: Color(0xFFFF6B9D),
+                size: 24,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Finance Dashboard',
+              style: TextStyle(
+                color: Color(0xFF2D3142),
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.assessment),
+            icon: Icon(Icons.assessment_rounded, color: Color(0xFFFF6B9D)),
             tooltip: 'Laporan Bonus',
             onPressed: () {
               Navigator.push(
@@ -64,30 +108,116 @@ class _FinanceDashboardState extends State<FinanceDashboard>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: Icon(Icons.logout_rounded, color: Color(0xFFFF6B9D)),
             tooltip: 'Logout',
             onPressed: () => _logout(context),
           ),
+          SizedBox(width: 8),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: const [
-            Tab(icon: Icon(Icons.pending_actions), text: "Permintaan"),
-            Tab(icon: Icon(Icons.check_circle), text: "Disetujui"),
-            Tab(icon: Icon(Icons.payment), text: "Dibayar"),
-            Tab(icon: Icon(Icons.cancel), text: "Ditolak"), // Tab baru
+      ),
+      body: ScaleTransition(
+        scale: _scaleAnimation,
+        child: BonusRequestListView(status: _statusList[_currentIndex]),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: Offset(0, -5),
+            ),
           ],
         ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  index: 0,
+                  icon: Icons.pending_actions_rounded,
+                  label: 'Permintaan',
+                  color: Color(0xFFFF6B9D),
+                ),
+                _buildNavItem(
+                  index: 1,
+                  icon: Icons.check_circle_rounded,
+                  label: 'Disetujui',
+                  color: Color(0xFF3B82F6),
+                ),
+                _buildNavItem(
+                  index: 2,
+                  icon: Icons.payments_rounded,
+                  label: 'Dibayar',
+                  color: Color(0xFF10B981),
+                ),
+                _buildNavItem(
+                  index: 3,
+                  icon: Icons.cancel_rounded,
+                  label: 'Ditolak',
+                  color: Color(0xFFEF4444),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          BonusRequestListView(status: 'pending'),
-          BonusRequestListView(status: 'approved'),
-          BonusRequestListView(status: 'paid'),
-          BonusRequestListView(status: 'rejected'), // List view baru
-        ],
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    final isSelected = _currentIndex == index;
+
+    return GestureDetector(
+      onTap: () => _onTabChanged(index),
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 16 : 12,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              padding: EdgeInsets.all(isSelected ? 8 : 6),
+              decoration: BoxDecoration(
+                color: isSelected ? color : color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? Colors.white : color,
+                size: isSelected ? 24 : 20,
+              ),
+            ),
+            SizedBox(height: 6),
+            AnimatedDefaultTextStyle(
+              duration: Duration(milliseconds: 300),
+              style: TextStyle(
+                fontSize: isSelected ? 12 : 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? color : Color(0xFF9CA3AF),
+              ),
+              child: Text(label),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -285,242 +415,285 @@ class BonusRequestCard extends StatelessWidget {
         }
 
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 3,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: statusColor.withOpacity(0.3), width: 1),
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              // Navigasi ke BonusDetailPage
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BonusDetailPage(
-                    requestId: requestId,
-                    requestData: requestData,
-                    employeeName: employeeName,
-                    submissionData: submissionData,
-                    targetData: targetData,
-                  ),
+          color: Colors.white,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: statusColor.withOpacity(0.2),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
                 ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header - Nama & Status
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: statusColor.withOpacity(0.2),
-                        child: Icon(Icons.person, color: statusColor),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              employeeName,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(statusIcon, size: 16, color: statusColor),
-                                const SizedBox(width: 4),
-                                Text(
-                                  statusText,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: statusColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Tampilkan Nominal Bonus jika sudah ada
-                      if (requestData['bonusAmount'] != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green[50],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green[300]!),
-                          ),
-                          child: Text(
-                            FinanceUtils.formatCurrency(
-                              requestData['bonusAmount'],
-                            ),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const Divider(height: 24),
-
-                  // Info Target & Pencapaian
-                  _buildInfoRow(
-                    Icons.flag,
-                    "Target",
-                    targetData['title'] ?? 'N/A',
-                  ),
-                  const SizedBox(height: 8),
-                  _buildInfoRow(
-                    Icons.calendar_today,
-                    "Periode",
-                    targetData['period'] ?? 'N/A',
-                  ),
-                  const SizedBox(height: 8),
-                  _buildInfoRow(
-                    Icons.trending_up,
-                    "Pencapaian",
-                    "$achieved / $target ${targetData['unit'] ?? ''} (${percentage.toStringAsFixed(1)}%)",
-                  ),
-                  const SizedBox(height: 8),
-                  _buildInfoRow(
-                    Icons.access_time,
-                    "Tanggal Permintaan",
-                    FinanceUtils.formatDate(requestDate),
-                  ),
-
-                  // Info Tambahan (Approved, Paid, Rejected)
-                  if (status == 'approved' || status == 'paid') ...[
-                    const SizedBox(height: 8),
-                    if (requestData['approvedAt'] != null)
-                      _buildInfoRow(
-                        Icons.check,
-                        "Disetujui",
-                        FinanceUtils.formatDate(
-                          (requestData['approvedAt'] as Timestamp).toDate(),
-                        ),
-                      ),
-                  ],
-
-                  if (status == 'paid') ...[
-                    const SizedBox(height: 8),
-                    if (requestData['paidAt'] != null)
-                      _buildInfoRow(
-                        Icons.payment,
-                        "Dibayar",
-                        FinanceUtils.formatDate(
-                          (requestData['paidAt'] as Timestamp).toDate(),
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        // Generate dan tampilkan invoice lokal
-                        try {
-                          final pdfBytes =
-                              await FinanceUtils.generateInvoicePdf(
-                                requestData: requestData,
-                                employeeName: employeeName,
-                                submissionData: submissionData,
-                                targetData: targetData,
-                              );
-
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PdfPreviewPage(
-                                pdfBytes: pdfBytes,
-                                title: 'Invoice Bonus - $employeeName',
-                                filename: 'invoice_bonus_$requestId.pdf',
-                              ),
-                            ),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Error: $e"),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.picture_as_pdf, size: 18),
-                      label: const Text("Cetak Invoice"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[700],
-                        foregroundColor: Colors.white,
-                      ),
+              ],
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                // Navigasi ke BonusDetailPage
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BonusDetailPage(
+                      requestId: requestId,
+                      requestData: requestData,
+                      employeeName: employeeName,
+                      submissionData: submissionData,
+                      targetData: targetData,
                     ),
-                  ],
-
-                  if (status == 'rejected') ...[
-                    const SizedBox(height: 8),
-                    if (requestData['rejectedAt'] != null)
-                      _buildInfoRow(
-                        Icons.cancel,
-                        "Ditolak",
-                        FinanceUtils.formatDate(
-                          (requestData['rejectedAt'] as Timestamp).toDate(),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header - Nama & Status
+                    Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.person_rounded,
+                            color: statusColor,
+                            size: 28,
+                          ),
                         ),
-                      ),
-                    if (requestData['rejectionReason'] != null) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red[50],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.red[200]!),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                employeeName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2D3142),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      statusIcon,
+                                      size: 14,
+                                      color: statusColor,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      statusText,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: statusColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  size: 16,
-                                  color: Colors.red[700],
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  "Alasan Penolakan:",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red[900],
-                                  ),
-                                ),
-                              ],
+                        // Tampilkan Nominal Bonus jika sudah ada
+                        if (requestData['bonusAmount'] != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              requestData['rejectionReason'],
+                            decoration: BoxDecoration(
+                              color: Color(0xFF10B981).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              FinanceUtils.formatCurrency(
+                                requestData['bonusAmount'],
+                              ),
                               style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[800],
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF10B981),
                               ),
                             ),
-                          ],
+                          ),
+                      ],
+                    ),
+
+                    Divider(height: 24, color: Color(0xFFE8E8E8)),
+
+                    // Info Target & Pencapaian
+                    _buildInfoRow(
+                      Icons.flag_rounded,
+                      "Target",
+                      targetData['title'] ?? 'N/A',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      Icons.calendar_today_rounded,
+                      "Periode",
+                      targetData['period'] ?? 'N/A',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      Icons.trending_up_rounded,
+                      "Pencapaian",
+                      "$achieved / $target ${targetData['unit'] ?? ''} (${percentage.toStringAsFixed(1)}%)",
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      Icons.access_time_rounded,
+                      "Tanggal Permintaan",
+                      FinanceUtils.formatDate(requestDate),
+                    ),
+
+                    // Info Tambahan (Approved, Paid, Rejected)
+                    if (status == 'approved' || status == 'paid') ...[
+                      const SizedBox(height: 8),
+                      if (requestData['approvedAt'] != null)
+                        _buildInfoRow(
+                          Icons.check_circle_rounded,
+                          "Disetujui",
+                          FinanceUtils.formatDate(
+                            (requestData['approvedAt'] as Timestamp).toDate(),
+                          ),
+                        ),
+                    ],
+
+                    if (status == 'paid') ...[
+                      const SizedBox(height: 8),
+                      if (requestData['paidAt'] != null)
+                        _buildInfoRow(
+                          Icons.payment_rounded,
+                          "Dibayar",
+                          FinanceUtils.formatDate(
+                            (requestData['paidAt'] as Timestamp).toDate(),
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          // Generate dan tampilkan invoice lokal
+                          try {
+                            final pdfBytes =
+                                await FinanceUtils.generateInvoicePdf(
+                                  requestData: requestData,
+                                  employeeName: employeeName,
+                                  submissionData: submissionData,
+                                  targetData: targetData,
+                                );
+
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PdfPreviewPage(
+                                  pdfBytes: pdfBytes,
+                                  title: 'Invoice Bonus - $employeeName',
+                                  filename: 'invoice_bonus_$requestId.pdf',
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error: $e"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.picture_as_pdf, size: 18),
+                        label: const Text("Cetak Invoice"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[700],
+                          foregroundColor: Colors.white,
                         ),
                       ),
                     ],
+
+                    if (status == 'rejected') ...[
+                      const SizedBox(height: 8),
+                      if (requestData['rejectedAt'] != null)
+                        _buildInfoRow(
+                          Icons.cancel,
+                          "Ditolak",
+                          FinanceUtils.formatDate(
+                            (requestData['rejectedAt'] as Timestamp).toDate(),
+                          ),
+                        ),
+                      if (requestData['rejectionReason'] != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFEE2E2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Color(0xFFEF4444).withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline_rounded,
+                                    size: 18,
+                                    color: Color(0xFFEF4444),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Alasan Penolakan:",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFEF4444),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                requestData['rejectionReason'],
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -532,18 +705,24 @@ class BonusRequestCard extends StatelessWidget {
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: Colors.grey[600]),
-        const SizedBox(width: 8),
+        Icon(icon, size: 18, color: Color(0xFF9CA3AF)),
+        const SizedBox(width: 10),
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: TextStyle(color: Colors.grey[800], fontSize: 13),
+              style: TextStyle(color: Color(0xFF2D3142), fontSize: 13),
               children: [
                 TextSpan(
                   text: "$label: ",
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                  ),
                 ),
-                TextSpan(text: value),
+                TextSpan(
+                  text: value,
+                  style: const TextStyle(color: Color(0xFF2D3142)),
+                ),
               ],
             ),
           ),
@@ -926,9 +1105,19 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
     final double percentage = target > 0 ? (achieved / target) * 100 : 0;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Detail Permintaan Bonus"),
-        backgroundColor: Colors.green[700],
+        title: const Text(
+          "Detail Permintaan Bonus",
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF2D3142)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -937,14 +1126,31 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
           children: [
             // Card Karyawan
             Card(
-              elevation: 2,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE8E8E8)),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      child: Icon(Icons.person, size: 30),
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.person_outline_rounded,
+                        size: 32,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -953,13 +1159,19 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
                         children: [
                           const Text(
                             "Karyawan:",
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                            style: TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             widget.employeeName,
                             style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2D3142),
                             ),
                           ),
                         ],
@@ -973,41 +1185,76 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
 
             // Card Target & Pencapaian
             Card(
-              elevation: 2,
-              color: Colors.green[50],
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE8E8E8)),
+              ),
+              color: Colors.white,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Target Kinerja",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF6B9D).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.flag_outlined,
+                            color: Color(0xFFFF6B9D),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          "Target Kinerja",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2D3142),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Judul: ${widget.targetData['title'] ?? 'N/A'}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text("Judul: ${widget.targetData['title'] ?? 'N/A'}"),
-                    Text("Periode: ${widget.targetData['period'] ?? 'N/A'}"),
-                    const Divider(height: 24),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Periode: ${widget.targetData['period'] ?? 'N/A'}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                    const Divider(height: 24, color: Color(0xFFE8E8E8)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildStatColumn(
                           "Target",
                           "$target ${widget.targetData['unit'] ?? ''}",
-                          Colors.blue,
+                          const Color(0xFFFF6B9D),
                         ),
                         _buildStatColumn(
                           "Hasil",
                           "$achieved ${widget.targetData['unit'] ?? ''}",
-                          Colors.black87,
+                          const Color(0xFF2D3142),
                         ),
                         _buildStatColumn(
                           "Pencapaian",
                           "${percentage.toStringAsFixed(1)}%",
-                          Colors.green,
+                          const Color(0xFF4CAF50),
                         ),
                       ],
                     ),
@@ -1020,38 +1267,115 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
             // Card Aksi: Pending
             if (status == 'pending') ...[
               Card(
-                elevation: 2,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0xFFE8E8E8)),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Tentukan Nominal Bonus",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF6B9D).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.payments_outlined,
+                              color: Color(0xFFFF6B9D),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Tentukan Nominal Bonus",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2D3142),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       TextField(
                         controller: _bonusAmountController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF2D3142),
+                        ),
+                        decoration: InputDecoration(
                           labelText: 'Nominal Bonus (Rp)',
+                          labelStyle: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 14,
+                          ),
                           hintText:
                               'Minimal ${BonusConfig.minimumAmountFormatted}',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.money),
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE8E8E8),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE8E8E8),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFFF6B9D),
+                              width: 2,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.monetization_on_outlined,
+                            color: Color(0xFFFF6B9D),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF8F9FA),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Minimal bonus: ${BonusConfig.minimumAmountFormatted}. Sesuaikan dengan kebijakan perusahaan.",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                          fontStyle: FontStyle.italic,
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F9FA),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE8E8E8)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: Color(0xFF6B7280),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Minimal bonus: ${BonusConfig.minimumAmountFormatted}. Sesuaikan dengan kebijakan perusahaan.",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B7280),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -1060,40 +1384,63 @@ class _BonusDetailPageState extends State<BonusDetailPage> {
               ),
               const SizedBox(height: 24),
               if (_isLoading)
-                const Center(child: CircularProgressIndicator())
+                const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFFFF6B9D),
+                    ),
+                  ),
+                )
               else
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ElevatedButton.icon(
                       onPressed: _approveBonus,
-                      icon: const Icon(Icons.check_circle, color: Colors.white),
+                      icon: const Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.white,
+                      ),
                       label: const Text(
                         "Setujui Bonus",
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: const Color(0xFF4CAF50),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: _rejectBonus,
-                      icon: const Icon(Icons.cancel, color: Colors.red),
+                      icon: const Icon(
+                        Icons.cancel_outlined,
+                        color: Color(0xFFEF5350),
+                      ),
                       label: const Text(
                         "Tolak Permintaan",
-                        style: TextStyle(fontSize: 16, color: Colors.red),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFFEF5350),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Colors.red),
+                        side: const BorderSide(
+                          color: Color(0xFFEF5350),
+                          width: 1.5,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),

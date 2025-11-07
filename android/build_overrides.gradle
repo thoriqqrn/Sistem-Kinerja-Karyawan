@@ -1,0 +1,15 @@
+// File untuk override build configuration subprojects
+// Diperlukan untuk fix printing package compileSdk issue
+
+ext.buildscript {
+    afterEvaluate {
+        android {
+            compileSdkVersion 34
+            
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_11
+                targetCompatibility JavaVersion.VERSION_11
+            }
+        }
+    }
+}

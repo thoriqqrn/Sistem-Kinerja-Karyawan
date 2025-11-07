@@ -1,0 +1,32 @@
+// Init script untuk force semua Android library modules
+// menggunakan compileSdk 34 dan Java 11
+
+allprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            def android = project.android
+            
+            if (android.hasProperty('compileSdkVersion')) {
+                android.compileSdkVersion 34
+            }
+            
+            if (android.hasProperty('defaultConfig')) {
+                android.defaultConfig {
+                    if (it.hasProperty('minSdk')) {
+                        minSdk 23
+                    }
+                    if (it.hasProperty('minSdkVersion')) {
+                        minSdkVersion 23
+                    }
+                }
+            }
+            
+            if (android.hasProperty('compileOptions')) {
+                android.compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_11
+                    targetCompatibility JavaVersion.VERSION_11
+                }
+            }
+        }
+    }
+}

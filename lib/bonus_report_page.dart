@@ -61,20 +61,57 @@ class _BonusReportPageState extends State<BonusReportPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Laporan Bonus"),
-        backgroundColor: Colors.green[700],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.person), text: "Per Karyawan"),
-            Tab(icon: Icon(Icons.calendar_month), text: "Per Periode"),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Color(0xFF2D3142)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Laporan Bonus',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(60),
+          child: Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Color(0xFFFF6B9D),
+              unselectedLabelColor: Color(0xFF9CA3AF),
+              indicatorColor: Color(0xFFFF6B9D),
+              indicatorWeight: 3,
+              labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              unselectedLabelStyle: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+              tabs: const [
+                Tab(
+                  icon: Icon(Icons.person_outline_rounded),
+                  text: "Per Karyawan",
+                ),
+                Tab(
+                  icon: Icon(Icons.calendar_month_rounded),
+                  text: "Per Periode",
+                ),
+              ],
+            ),
+          ),
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list),
+            icon: Icon(Icons.filter_list_rounded, color: Color(0xFFFF6B9D)),
             tooltip: 'Filter Periode',
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             onSelected: (value) {
               setState(() {
                 _selectedPeriod = value;
@@ -88,25 +125,88 @@ class _BonusReportPageState extends State<BonusReportPage>
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'all', child: Text('Semua Periode')),
-              const PopupMenuItem(value: 'thisMonth', child: Text('Bulan Ini')),
-              const PopupMenuItem(
-                value: 'lastMonth',
-                child: Text('Bulan Lalu'),
+              PopupMenuItem(
+                value: 'all',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.all_inclusive_rounded,
+                      size: 20,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Semua Periode'),
+                  ],
+                ),
               ),
-              const PopupMenuItem(value: 'thisYear', child: Text('Tahun Ini')),
-              const PopupMenuItem(
+              PopupMenuItem(
+                value: 'thisMonth',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 20,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Bulan Ini'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'lastMonth',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.history_rounded,
+                      size: 20,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Bulan Lalu'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'thisYear',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.event_rounded,
+                      size: 20,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Tahun Ini'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
                 value: 'custom',
-                child: Text('Pilih Tanggal'),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.date_range_rounded,
+                      size: 20,
+                      color: Color(0xFFFF6B9D),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Pilih Tanggal',
+                      style: TextStyle(color: Color(0xFFFF6B9D)),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
           if (_selectedPeriod != 'all')
             IconButton(
-              icon: const Icon(Icons.clear),
+              icon: Icon(Icons.clear_rounded, color: Color(0xFFEF5350)),
               tooltip: 'Hapus Filter',
               onPressed: _clearDateFilter,
             ),
+          SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -115,18 +215,43 @@ class _BonusReportPageState extends State<BonusReportPage>
           if (_selectedPeriod != 'all')
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              color: Colors.blue[50],
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFFF6B9D).withOpacity(0.1),
+                    Color(0xFFFF8FB3).withOpacity(0.1),
+                  ],
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Color(0xFFFF6B9D).withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
-                  const SizedBox(width: 8),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFF6B9D).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.filter_alt_rounded,
+                      color: Color(0xFFFF6B9D),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       _getFilterText(),
                       style: TextStyle(
-                        color: Colors.blue[700],
+                        color: Color(0xFF2D3142),
                         fontWeight: FontWeight.w600,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -248,7 +373,11 @@ class BonusReportByEmployee extends StatelessWidget {
       stream: _getQuery().snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B9D)),
+            ),
+          );
         }
         if (snapshot.hasError) {
           return Center(child: Text("Error: ${snapshot.error}"));
@@ -258,11 +387,34 @@ class BonusReportByEmployee extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
-                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Text(
                   "Belum ada data bonus untuk periode ini",
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: const Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Data bonus akan muncul di sini setelah dibayarkan",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: const Color(0xFF9CA3AF),
+                  ),
                 ),
               ],
             ),
@@ -290,31 +442,50 @@ class BonusReportByEmployee extends StatelessWidget {
             // Summary Card
             Container(
               margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green[700]!, Colors.green[500]!],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.withOpacity(0.3),
-                    blurRadius: 8,
+                    color: const Color(0xFFFF6B9D).withOpacity(0.3),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  const Text(
-                    "Total Bonus Dibayarkan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.payments_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Total Bonus Dibayarkan",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Text(
                     FinanceUtils.formatCurrency(totalBonus),
                     style: const TextStyle(
@@ -358,73 +529,172 @@ class BonusReportByEmployee extends StatelessWidget {
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        elevation: 2,
-                        child: ExpansionTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.green[100],
-                            child: Text(
-                              employeeName
-                                  .toString()
-                                  .substring(0, 1)
-                                  .toUpperCase(),
-                              style: TextStyle(
-                                color: Colors.green[700],
-                                fontWeight: FontWeight.bold,
-                              ),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: const BorderSide(color: Color(0xFFE8E8E8)),
+                        ),
+                        color: Colors.white,
+                        child: Theme(
+                          data: Theme.of(
+                            context,
+                          ).copyWith(dividerColor: Colors.transparent),
+                          child: ExpansionTile(
+                            tilePadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                          ),
-                          title: Text(
-                            employeeName.toString(),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text("${bonuses.length} bonus diterima"),
-                          trailing: Text(
-                            FinanceUtils.formatCurrency(totalEmployeeBonus),
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
+                            childrenPadding: const EdgeInsets.only(
+                              left: 16,
+                              right: 16,
+                              bottom: 12,
                             ),
-                          ),
-                          children: bonuses.map((bonus) {
-                            final paidAt = bonus['paidAt'] as Timestamp?;
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(
-                                Icons.monetization_on,
-                                color: Colors.green,
-                                size: 20,
-                              ),
-                              title: Text(
-                                FinanceUtils.formatCurrency(
-                                  bonus['bonusAmount'],
+                            leading: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFFF6B9D),
+                                    Color(0xFFFF8FB3),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  employeeName
+                                      .toString()
+                                      .substring(0, 1)
+                                      .toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              employeeName.toString(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: Color(0xFF2D3142),
+                              ),
+                            ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                "${bonuses.length} bonus diterima",
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: Color(0xFF9CA3AF),
                                 ),
                               ),
-                              subtitle: Text(
-                                paidAt != null
-                                    ? DateFormat(
-                                        'dd MMM yyyy',
-                                      ).format(paidAt.toDate())
-                                    : 'N/A',
-                                style: const TextStyle(fontSize: 11),
+                            ),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
-                              trailing: bonus['invoiceGenerated'] == true
-                                  ? IconButton(
-                                      icon: const Icon(
-                                        Icons.picture_as_pdf,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8F9FA),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                FinanceUtils.formatCurrency(totalEmployeeBonus),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFFF6B9D),
+                                ),
+                              ),
+                            ),
+                            children: bonuses.map((bonus) {
+                              final paidAt = bonus['paidAt'] as Timestamp?;
+                              return Container(
+                                margin: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8F9FA),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFFFF6B9D,
+                                        ).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.monetization_on_outlined,
+                                        color: Color(0xFFFF6B9D),
                                         size: 20,
                                       ),
-                                      color: Colors.red[700],
-                                      onPressed: () async {
-                                        await _showInvoice(context, bonus);
-                                      },
-                                    )
-                                  : null,
-                            );
-                          }).toList(),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            FinanceUtils.formatCurrency(
+                                              bonus['bonusAmount'],
+                                            ),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              color: Color(0xFF2D3142),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            paidAt != null
+                                                ? DateFormat(
+                                                    'dd MMM yyyy',
+                                                  ).format(paidAt.toDate())
+                                                : 'N/A',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF9CA3AF),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (bonus['invoiceGenerated'] == true)
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.picture_as_pdf_outlined,
+                                            size: 20,
+                                            color: Color(0xFFEF5350),
+                                          ),
+                                          onPressed: () async {
+                                            await _showInvoice(context, bonus);
+                                          },
+                                          padding: const EdgeInsets.all(8),
+                                          constraints: const BoxConstraints(),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       );
                     },
@@ -561,7 +831,11 @@ class BonusReportByPeriod extends StatelessWidget {
       stream: _getQuery().snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B9D)),
+            ),
+          );
         }
         if (snapshot.hasError) {
           return Center(child: Text("Error: ${snapshot.error}"));
@@ -571,11 +845,34 @@ class BonusReportByPeriod extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
-                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Text(
                   "Belum ada data bonus untuk periode ini",
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: const Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Pilih periode lain untuk melihat data bonus",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: const Color(0xFF9CA3AF),
+                  ),
                 ),
               ],
             ),
@@ -604,31 +901,50 @@ class BonusReportByPeriod extends StatelessWidget {
           children: [
             Container(
               margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue[700]!, Colors.blue[500]!],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
-                    blurRadius: 8,
+                    color: const Color(0xFFFF6B9D).withOpacity(0.3),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  const Text(
-                    "Total Bonus Periode Ini",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.trending_up_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Total Bonus Periode Ini",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Text(
                     FinanceUtils.formatCurrency(totalBonus),
                     style: const TextStyle(
@@ -659,94 +975,210 @@ class BonusReportByPeriod extends StatelessWidget {
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
-                    elevation: 2,
-                    child: ExpansionTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blue[100],
-                        child: Icon(
-                          Icons.calendar_month,
-                          color: Colors.blue[700],
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    color: Colors.white,
+                    child: Theme(
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                      ),
-                      title: Text(
-                        monthKey,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text("${bonuses.length} transaksi"),
-                      trailing: Text(
-                        FinanceUtils.formatCurrency(monthTotal),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[700],
+                        childrenPadding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 12,
                         ),
-                      ),
-                      children: bonuses.map((bonus) {
-                        return FutureBuilder<DocumentSnapshot>(
-                          future: FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(bonus['employeeId'])
-                              .get(),
-                          builder: (context, empSnapshot) {
-                            final employeeName =
-                                empSnapshot.data?.data() != null
-                                ? (empSnapshot.data!.data()
-                                      as Map<String, dynamic>)['fullName']
-                                : 'Loading...';
-                            final paidAt = bonus['paidAt'] as Timestamp?;
+                        leading: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.calendar_month_outlined,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        title: Text(
+                          monthKey,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Color(0xFF2D3142),
+                          ),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            "${bonuses.length} transaksi",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8F9FA),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            FinanceUtils.formatCurrency(monthTotal),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFFF6B9D),
+                            ),
+                          ),
+                        ),
+                        children: bonuses.map((bonus) {
+                          return FutureBuilder<DocumentSnapshot>(
+                            future: FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(bonus['employeeId'])
+                                .get(),
+                            builder: (context, empSnapshot) {
+                              final employeeName =
+                                  empSnapshot.data?.data() != null
+                                  ? (empSnapshot.data!.data()
+                                        as Map<String, dynamic>)['fullName']
+                                  : 'Loading...';
+                              final paidAt = bonus['paidAt'] as Timestamp?;
 
-                            return ListTile(
-                              dense: true,
-                              leading: const CircleAvatar(
-                                radius: 16,
-                                child: Icon(Icons.person, size: 16),
-                              ),
-                              title: Text(
-                                employeeName.toString(),
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              subtitle: Text(
-                                paidAt != null
-                                    ? DateFormat(
-                                        'dd MMM yyyy, HH:mm',
-                                        'id_ID',
-                                      ).format(paidAt.toDate())
-                                    : 'N/A',
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    FinanceUtils.formatCurrency(
-                                      bonus['bonusAmount'],
-                                    ),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  if (bonus['invoiceGenerated'] == true) ...[
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.picture_as_pdf,
-                                        size: 18,
+                              return Container(
+                                margin: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8F9FA),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFF6B9D),
+                                            Color(0xFFFF8FB3),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
-                                      color: Colors.red[700],
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      onPressed: () async {
-                                        await _showInvoice(context, bonus);
-                                      },
+                                      child: Center(
+                                        child: Text(
+                                          employeeName
+                                              .toString()
+                                              .substring(0, 1)
+                                              .toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            employeeName.toString(),
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF2D3142),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            paidAt != null
+                                                ? DateFormat(
+                                                    'dd MMM yyyy, HH:mm',
+                                                    'id_ID',
+                                                  ).format(paidAt.toDate())
+                                                : 'N/A',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xFF9CA3AF),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          FinanceUtils.formatCurrency(
+                                            bonus['bonusAmount'],
+                                          ),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: Color(0xFFFF6B9D),
+                                          ),
+                                        ),
+                                        if (bonus['invoiceGenerated'] ==
+                                            true) ...[
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: IconButton(
+                                              icon: const Icon(
+                                                Icons.picture_as_pdf_outlined,
+                                                size: 18,
+                                                color: Color(0xFFEF5350),
+                                              ),
+                                              padding: const EdgeInsets.all(6),
+                                              constraints:
+                                                  const BoxConstraints(),
+                                              onPressed: () async {
+                                                await _showInvoice(
+                                                  context,
+                                                  bonus,
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ],
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      }).toList(),
+                                ),
+                              );
+                            },
+                          );
+                        }).toList(),
+                      ),
                     ),
                   );
                 },

@@ -188,9 +188,22 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
         : 0;
 
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Input Hasil Harian'),
-        backgroundColor: Colors.blue[700],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Color(0xFF2D3142)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Input Hasil Harian',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -198,122 +211,224 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Target Info Card
-            Card(
-              elevation: 3,
-              color: Colors.blue[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.targetData['title'] ?? 'Target',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Target: $targetValue $unit',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                    ),
-                    if (deadline != null)
-                      Text(
-                        'Deadline: ${DateFormat('dd MMM yyyy').format(deadline)}',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                      ),
-                  ],
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFFFF6B9D).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.flag_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.targetData['title'] ?? 'Target',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Target: $targetValue $unit',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (deadline != null) ...[
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.event_rounded,
+                          color: Colors.white.withOpacity(0.9),
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Deadline: ${DateFormat('dd MMM yyyy').format(deadline)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ),
             const SizedBox(height: 16),
 
             // Progress Summary Card
-            Card(
-              elevation: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Progress Saat Ini',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Progress Saat Ini',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2D3142),
                         ),
-                        Text(
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
                           '${percentage.toStringAsFixed(1)}%',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: percentage >= 50
-                                ? Colors.green
-                                : Colors.orange,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    LinearProgressIndicator(
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
                       value: percentage / 100,
                       minHeight: 10,
-                      backgroundColor: Colors.grey[300],
+                      backgroundColor: Color(0xFFF0F0F0),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         percentage >= 75
-                            ? Colors.green
+                            ? Color(0xFF4CAF50)
                             : percentage >= 50
-                            ? Colors.blue
+                            ? Color(0xFFFF6B9D)
                             : percentage >= 25
-                            ? Colors.orange
-                            : Colors.red,
+                            ? Color(0xFFFFB74D)
+                            : Color(0xFFEF5350),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildStatItem(
-                          'Tercapai',
-                          '$_totalProgress $unit',
-                          Colors.blue,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildStatItem(
+                        'Tercapai',
+                        '$_totalProgress $unit',
+                        Color(0xFFFF6B9D),
+                      ),
+                      Container(height: 40, width: 1, color: Color(0xFFE8E8E8)),
+                      _buildStatItem(
+                        'Sisa',
+                        '$remaining $unit',
+                        Color(0xFFFFB74D),
+                      ),
+                      if (remainingDays > 0) ...[
+                        Container(
+                          height: 40,
+                          width: 1,
+                          color: Color(0xFFE8E8E8),
                         ),
                         _buildStatItem(
-                          'Sisa',
-                          '$remaining $unit',
-                          Colors.orange,
+                          'Per Hari',
+                          '$dailyTarget $unit',
+                          Color(0xFF4CAF50),
                         ),
-                        if (remainingDays > 0)
-                          _buildStatItem(
-                            'Per Hari',
-                            '$dailyTarget $unit',
-                            Colors.green,
-                          ),
                       ],
-                    ),
-                    if (remainingDays > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          'Sisa waktu: $remainingDays hari',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: remainingDays <= 7
-                                ? Colors.red
-                                : Colors.grey[700],
-                            fontWeight: remainingDays <= 7
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
+                    ],
+                  ),
+                  if (remainingDays > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: remainingDays <= 7
+                              ? Color(0xFFFFEBEE)
+                              : Color(0xFFF0F9FF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.timer_rounded,
+                              color: remainingDays <= 7
+                                  ? Color(0xFFEF5350)
+                                  : Color(0xFF42A5F5),
+                              size: 18,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Sisa waktu: $remainingDays hari',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: remainingDays <= 7
+                                    ? Color(0xFFEF5350)
+                                    : Color(0xFF42A5F5),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
@@ -324,14 +439,34 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _hasInputToday
-                        ? 'Edit Progress Hari Ini'
-                        : 'Input Progress Hari Ini',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFFF6B9D).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          _hasInputToday
+                              ? Icons.edit_rounded
+                              : Icons.add_task_rounded,
+                          color: Color(0xFFFF6B9D),
+                          size: 20,
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        _hasInputToday
+                            ? 'Edit Progress Hari Ini'
+                            : 'Input Progress Hari Ini',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2D3142),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -339,76 +474,178 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                       'EEEE, dd MMMM yyyy',
                       'id_ID',
                     ).format(DateTime.now()),
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _valueController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Hasil Hari Ini ($unit)',
-                      hintText: 'Contoh: 100',
-                      prefixIcon: const Icon(Icons.trending_up),
-                      border: const OutlineInputBorder(),
-                      helperText: 'Masukkan pencapaian hari ini',
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Nilai harus diisi';
-                      }
-                      final intValue = int.tryParse(value);
-                      if (intValue == null || intValue <= 0) {
-                        return 'Nilai harus lebih dari 0';
-                      }
-                      if (!_hasInputToday &&
-                          (_totalProgress + intValue > targetValue)) {
-                        return 'Total akan melebihi target ($targetValue)';
-                      }
-                      return null;
-                    },
+                    child: TextFormField(
+                      controller: _valueController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: Color(0xFF2D3142), fontSize: 15),
+                      decoration: InputDecoration(
+                        labelText: 'Hasil Hari Ini ($unit)',
+                        hintText: 'Contoh: 100',
+                        labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                        hintStyle: TextStyle(color: Color(0xFFD1D5DB)),
+                        prefixIcon: Icon(
+                          Icons.trending_up_rounded,
+                          color: Color(0xFFFF6B9D),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Color(0xFFFF6B9D),
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Nilai harus diisi';
+                        }
+                        final intValue = int.tryParse(value);
+                        if (intValue == null || intValue <= 0) {
+                          return 'Nilai harus lebih dari 0';
+                        }
+                        if (!_hasInputToday &&
+                            (_totalProgress + intValue > targetValue)) {
+                          return 'Total akan melebihi target ($targetValue)';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _notesController,
-                    maxLines: 3,
-                    maxLength: 200,
-                    decoration: const InputDecoration(
-                      labelText: 'Catatan (Opsional)',
-                      hintText: 'Catatan tentang pencapaian hari ini...',
-                      prefixIcon: Icon(Icons.note_alt),
-                      border: OutlineInputBorder(),
-                      helperText: 'Tambahkan catatan jika perlu',
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextFormField(
+                      controller: _notesController,
+                      maxLines: 3,
+                      maxLength: 200,
+                      style: TextStyle(color: Color(0xFF2D3142), fontSize: 15),
+                      decoration: InputDecoration(
+                        labelText: 'Catatan (Opsional)',
+                        hintText: 'Catatan tentang pencapaian hari ini...',
+                        labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                        hintStyle: TextStyle(color: Color(0xFFD1D5DB)),
+                        prefixIcon: Icon(
+                          Icons.note_alt_outlined,
+                          color: Color(0xFFFF6B9D),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Color(0xFFFF6B9D),
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
+
+                  Container(
+                    height: 54,
                     width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _saveProgress,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : Icon(_hasInputToday ? Icons.update : Icons.save),
-                      label: Text(
-                        _isLoading
-                            ? 'Menyimpan...'
-                            : _hasInputToday
-                            ? 'Update Progress'
-                            : 'Simpan Progress',
-                        style: const TextStyle(fontSize: 16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[700],
-                        foregroundColor: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFFFF6B9D).withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _isLoading ? null : _saveProgress,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Center(
+                          child: _isLoading
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _hasInputToday
+                                          ? Icons.update_rounded
+                                          : Icons.save_rounded,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      _hasInputToday
+                                          ? 'Update Progress'
+                                          : 'Simpan Progress',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
                       ),
                     ),
                   ),
@@ -418,9 +655,30 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
             const SizedBox(height: 32),
 
             // History Section
-            const Text(
-              'Riwayat Input',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFF6B9D).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.history_rounded,
+                    color: Color(0xFFFF6B9D),
+                    size: 20,
+                  ),
+                ),
+                SizedBox(width: 10),
+                Text(
+                  'Riwayat Input',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2D3142),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             _buildHistoryList(),
@@ -433,13 +691,13 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
   Widget _buildStatItem(String label, String value, Color color) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-        const SizedBox(height: 4),
+        Text(label, style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+        const SizedBox(height: 6),
         Text(
           value,
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             color: color,
           ),
         ),
@@ -456,24 +714,51 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B9D)),
+              ),
+            ),
+          );
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.history, size: 48, color: Colors.grey[400]),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Belum ada riwayat input',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
+          return Container(
+            padding: EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 2),
                 ),
+              ],
+            ),
+            child: Center(
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF8F9FA),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.history_rounded,
+                      size: 48,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Belum ada riwayat input',
+                    style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                  ),
+                ],
               ),
             ),
           );
@@ -502,70 +787,139 @@ class _DailyProgressInputPageState extends State<DailyProgressInputPage> {
                 DateFormat('dd-MM-yyyy').format(date) ==
                 DateFormat('dd-MM-yyyy').format(DateTime.now());
 
-            return Card(
-              elevation: isToday ? 3 : 1,
-              color: isToday ? Colors.blue[50] : null,
-              margin: const EdgeInsets.only(bottom: 8),
+            return Container(
+              margin: EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: isToday ? Color(0xFFFFF5F9) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: isToday
+                    ? Border.all(color: Color(0xFFFF6B9D), width: 2)
+                    : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isToday ? 0.08 : 0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
               child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: isToday ? Colors.blue : Colors.grey[400],
-                  child: Text(
-                    date.day.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                leading: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: isToday
+                        ? LinearGradient(
+                            colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                          )
+                        : null,
+                    color: isToday ? null : Color(0xFFF0F0F0),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        DateFormat('MMM', 'id_ID').format(date).toUpperCase(),
+                        style: TextStyle(
+                          color: isToday ? Colors.white : Color(0xFF9CA3AF),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        date.day.toString(),
+                        style: TextStyle(
+                          color: isToday ? Colors.white : Color(0xFF2D3142),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 title: Row(
                   children: [
-                    Flexible(
+                    Expanded(
                       child: Text(
-                        DateFormat('EEEE, dd MMM yyyy', 'id_ID').format(date),
+                        DateFormat('EEEE', 'id_ID').format(date),
                         style: TextStyle(
                           fontWeight: isToday
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          fontSize: 15,
+                          color: Color(0xFF2D3142),
                         ),
                       ),
                     ),
-                    if (isToday) ...[
-                      const SizedBox(width: 8),
+                    if (isToday)
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.blue,
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
+                        child: Text(
                           'HARI INI',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
-                    ],
                   ],
                 ),
                 subtitle: notes != null && notes.isNotEmpty
-                    ? Text(
-                        notes,
-                        style: const TextStyle(fontStyle: FontStyle.italic),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    ? Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text(
+                          notes,
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       )
                     : null,
-                trailing: Text(
-                  '+$dailyValue ${widget.targetData['unit']}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                trailing: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF4CAF50).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '+$dailyValue',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4CAF50),
+                        ),
+                      ),
+                      Text(
+                        widget.targetData['unit'],
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF4CAF50),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

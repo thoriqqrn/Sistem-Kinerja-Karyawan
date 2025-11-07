@@ -190,7 +190,23 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Buat Target Baru")),
+      backgroundColor: Color(0xFFF8F9FA),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Color(0xFF2D3142)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Buat Target Baru',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -198,132 +214,451 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Dropdown untuk memilih karyawan
-              DropdownButtonFormField<String>(
-                value: _selectedEmployeeId,
-                hint: const Text("Pilih Karyawan"),
-                items: _employeeDropdownItems,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedEmployeeId = value;
-                  });
-                },
-                validator: (value) =>
-                    value == null ? 'Harap pilih karyawan' : null,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(),
+              // Info Card
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFFF6B9D).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.flag_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Target Kinerja',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Tetapkan target untuk karyawan',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Dropdown Karyawan
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedEmployeeId,
+                  hint: Text(
+                    "Pilih Karyawan",
+                    style: TextStyle(color: Color(0xFF9CA3AF)),
+                  ),
+                  items: _employeeDropdownItems,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedEmployeeId = value;
+                    });
+                  },
+                  validator: (value) =>
+                      value == null ? 'Harap pilih karyawan' : null,
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(
+                      Icons.person_outline_rounded,
+                      color: Color(0xFFFF6B9D),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Color(0xFFFF6B9D),
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Input Judul Target
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Judul Target',
-                  hintText: 'Contoh: Penjualan Produk X',
-                  prefixIcon: Icon(Icons.title),
-                  border: OutlineInputBorder(),
+              // Judul Target
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
-                validator: (value) =>
-                    value!.isEmpty ? 'Judul tidak boleh kosong' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Input Deskripsi
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Deskripsi Target',
-                  hintText: 'Jelaskan detail target...',
-                  prefixIcon: Icon(Icons.description),
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-
-              // Input Nilai Target
-              TextFormField(
-                controller: _targetValueController,
-                decoration: const InputDecoration(
-                  labelText: 'Nilai Target (Angka)',
-                  hintText: 'Contoh: 100',
-                  prefixIcon: Icon(Icons.numbers),
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value!.isEmpty ? 'Nilai target tidak boleh kosong' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Input Satuan
-              TextFormField(
-                controller: _unitController,
-                decoration: const InputDecoration(
-                  labelText: 'Satuan',
-                  hintText: 'Contoh: unit, laporan, proyek',
-                  prefixIcon: Icon(Icons.straighten),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value!.isEmpty ? 'Satuan tidak boleh kosong' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Dropdown untuk memilih periode
-              DropdownButtonFormField<String>(
-                value: _selectedPeriod,
-                hint: const Text("Pilih Periode Target"),
-                items: ['Mingguan', 'Bulanan', 'Kuartal'].map((period) {
-                  return DropdownMenuItem<String>(
-                    value: period.toLowerCase(),
-                    child: Text(period),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedPeriod = value;
-                  });
-                },
-                validator: (value) =>
-                    value == null ? 'Harap pilih periode' : null,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(),
+                child: TextFormField(
+                  controller: _titleController,
+                  style: TextStyle(color: Color(0xFF2D3142), fontSize: 15),
+                  decoration: InputDecoration(
+                    labelText: 'Judul Target',
+                    hintText: 'Contoh: Penjualan Produk X',
+                    labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                    hintStyle: TextStyle(color: Color(0xFFD1D5DB)),
+                    prefixIcon: Icon(
+                      Icons.title_rounded,
+                      color: Color(0xFFFF6B9D),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Color(0xFFFF6B9D),
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Judul tidak boleh kosong' : null,
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Tombol Pilih Deadline
+              // Deskripsi
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  style: TextStyle(color: Color(0xFF2D3142), fontSize: 15),
+                  decoration: InputDecoration(
+                    labelText: 'Deskripsi Target',
+                    hintText: 'Jelaskan detail target...',
+                    labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                    hintStyle: TextStyle(color: Color(0xFFD1D5DB)),
+                    prefixIcon: Icon(
+                      Icons.description_outlined,
+                      color: Color(0xFFFF6B9D),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Color(0xFFFF6B9D),
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Nilai Target & Satuan (Row)
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _targetValueController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(
+                          color: Color(0xFF2D3142),
+                          fontSize: 15,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Nilai Target',
+                          hintText: '100',
+                          labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                          hintStyle: TextStyle(color: Color(0xFFD1D5DB)),
+                          prefixIcon: Icon(
+                            Icons.numbers_rounded,
+                            color: Color(0xFFFF6B9D),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Color(0xFFFF6B9D),
+                              width: 2,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Wajib diisi' : null,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _unitController,
+                        style: TextStyle(
+                          color: Color(0xFF2D3142),
+                          fontSize: 15,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Satuan',
+                          hintText: 'unit',
+                          labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                          hintStyle: TextStyle(color: Color(0xFFD1D5DB)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Color(0xFFFF6B9D),
+                              width: 2,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        validator: (value) => value!.isEmpty ? 'Wajib' : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Dropdown Periode
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedPeriod,
+                  hint: Text(
+                    "Pilih Periode Target",
+                    style: TextStyle(color: Color(0xFF9CA3AF)),
+                  ),
+                  items: ['Mingguan', 'Bulanan', 'Kuartal'].map((period) {
+                    return DropdownMenuItem<String>(
+                      value: period.toLowerCase(),
+                      child: Text(period),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedPeriod = value;
+                    });
+                  },
+                  validator: (value) =>
+                      value == null ? 'Harap pilih periode' : null,
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(
+                      Icons.calendar_today_rounded,
+                      color: Color(0xFFFF6B9D),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: Color(0xFFFF6B9D),
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Deadline Picker
               InkWell(
                 onTap: _selectDeadline,
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Deadline',
-                    prefixIcon: const Icon(Icons.event),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _selectedDeadline != null
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _selectedDeadline = null;
-                              });
-                            },
-                          )
-                        : const Icon(Icons.arrow_drop_down),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    _selectedDeadline != null
-                        ? _formatDate(_selectedDeadline!)
-                        : 'Pilih tanggal deadline',
-                    style: TextStyle(
-                      color: _selectedDeadline != null
-                          ? Colors.black
-                          : Colors.grey[600],
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Deadline',
+                      labelStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                      prefixIcon: Icon(
+                        Icons.event_rounded,
+                        color: Color(0xFFFF6B9D),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: Color(0xFFFF6B9D),
+                          width: 2,
+                        ),
+                      ),
+                      suffixIcon: _selectedDeadline != null
+                          ? IconButton(
+                              icon: Icon(Icons.clear, color: Color(0xFF9CA3AF)),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedDeadline = null;
+                                });
+                              },
+                            )
+                          : Icon(
+                              Icons.arrow_drop_down,
+                              color: Color(0xFF9CA3AF),
+                            ),
+                    ),
+                    child: Text(
+                      _selectedDeadline != null
+                          ? _formatDate(_selectedDeadline!)
+                          : 'Pilih tanggal deadline',
+                      style: TextStyle(
+                        color: _selectedDeadline != null
+                            ? Color(0xFF2D3142)
+                            : Color(0xFF9CA3AF),
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),
@@ -331,23 +666,27 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
 
               // Info deadline
               if (_selectedDeadline != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange[300]!),
+                    color: Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Color(0xFFFFB74D)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.orange[700]),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: Color(0xFFF57C00),
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Karyawan harus mengirim hasil kerja sebelum tanggal ini. Keterlambatan akan tercatat.',
+                          'Karyawan harus mengirim hasil kerja sebelum tanggal ini',
                           style: TextStyle(
-                            color: Colors.orange[900],
+                            color: Color(0xFFE65100),
                             fontSize: 12,
                           ),
                         ),
@@ -361,15 +700,57 @@ class _CreateTargetPageState extends State<CreateTargetPage> {
 
               // Tombol Simpan
               _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton.icon(
-                      onPressed: _saveTarget,
-                      icon: const Icon(Icons.save),
-                      label: const Text('Simpan Target'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFFFF6B9D),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      height: 54,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFFFF6B9D).withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _saveTarget,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.save_rounded,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Simpan Target',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
             ],

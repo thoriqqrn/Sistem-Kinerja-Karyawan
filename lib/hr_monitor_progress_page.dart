@@ -16,9 +16,22 @@ class _HRMonitorProgressPageState extends State<HRMonitorProgressPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Monitor Progress Karyawan'),
-        backgroundColor: Colors.green[700],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Color(0xFF2D3142)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Monitor Progress Karyawan',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: Column(
         children: [
@@ -32,15 +45,45 @@ class _HRMonitorProgressPageState extends State<HRMonitorProgressPage> {
   Widget _buildFilterSection() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.grey[100],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Filter',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Color(0xFFFF6B9D).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.filter_list_rounded,
+                  color: Color(0xFFFF6B9D),
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: 10),
+              Text(
+                'Filter',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2D3142),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _buildTargetFilter()),
@@ -49,16 +92,35 @@ class _HRMonitorProgressPageState extends State<HRMonitorProgressPage> {
             ],
           ),
           if (_selectedTargetId != null || _selectedEmployeeId != null) ...[
-            const SizedBox(height: 8),
-            TextButton.icon(
-              icon: const Icon(Icons.clear, size: 18),
-              label: const Text('Reset Filter'),
-              onPressed: () {
-                setState(() {
-                  _selectedTargetId = null;
-                  _selectedEmployeeId = null;
-                });
-              },
+            const SizedBox(height: 12),
+            Center(
+              child: TextButton.icon(
+                icon: Icon(
+                  Icons.clear_rounded,
+                  size: 18,
+                  color: Color(0xFFFF6B9D),
+                ),
+                label: Text(
+                  'Reset Filter',
+                  style: TextStyle(
+                    color: Color(0xFFFF6B9D),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _selectedTargetId = null;
+                    _selectedEmployeeId = null;
+                  });
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Color(0xFFFF6B9D).withOpacity(0.1),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
             ),
           ],
         ],
@@ -74,7 +136,24 @@ class _HRMonitorProgressPageState extends State<HRMonitorProgressPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const CircularProgressIndicator();
+          return Container(
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Color(0xFFE8E8E8)),
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B9D)),
+                ),
+              ),
+            ),
+          );
         }
 
         final targets = snapshot.data!.docs;
@@ -88,25 +167,67 @@ class _HRMonitorProgressPageState extends State<HRMonitorProgressPage> {
           }
         }
 
-        return DropdownButtonFormField<String>(
-          value: _selectedTargetId,
-          decoration: const InputDecoration(
-            labelText: 'Target',
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-          hint: const Text('Semua Target'),
-          items: uniqueTargets.entries.map((entry) {
-            return DropdownMenuItem(
-              value: entry.key,
-              child: Text(entry.value, overflow: TextOverflow.ellipsis),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedTargetId = value;
-            });
-          },
+          child: DropdownButtonFormField<String>(
+            value: _selectedTargetId,
+            decoration: InputDecoration(
+              labelText: 'Target',
+              labelStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+              prefixIcon: Icon(
+                Icons.flag_rounded,
+                color: Color(0xFFFF6B9D),
+                size: 20,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Color(0xFFFF6B9D), width: 2),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            hint: Text(
+              'Semua Target',
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            ),
+            items: uniqueTargets.entries.map((entry) {
+              return DropdownMenuItem(
+                value: entry.key,
+                child: Text(
+                  entry.value,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Color(0xFF2D3142), fontSize: 14),
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedTargetId = value;
+              });
+            },
+          ),
         );
       },
     );
@@ -120,32 +241,88 @@ class _HRMonitorProgressPageState extends State<HRMonitorProgressPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const CircularProgressIndicator();
+          return Container(
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Color(0xFFE8E8E8)),
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B9D)),
+                ),
+              ),
+            ),
+          );
         }
 
-        return DropdownButtonFormField<String>(
-          value: _selectedEmployeeId,
-          decoration: const InputDecoration(
-            labelText: 'Karyawan',
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          hint: const Text('Semua Karyawan'),
-          items: snapshot.data!.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            return DropdownMenuItem(
-              value: doc.id,
-              child: Text(
-                data['fullName'] ?? 'Unknown',
-                overflow: TextOverflow.ellipsis,
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: Offset(0, 2),
               ),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedEmployeeId = value;
-            });
-          },
+            ],
+          ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedEmployeeId,
+            decoration: InputDecoration(
+              labelText: 'Karyawan',
+              labelStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+              prefixIcon: Icon(
+                Icons.person_outline_rounded,
+                color: Color(0xFFFF6B9D),
+                size: 20,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Color(0xFFE8E8E8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Color(0xFFFF6B9D), width: 2),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            hint: Text(
+              'Semua Karyawan',
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            ),
+            items: snapshot.data!.docs.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return DropdownMenuItem(
+                value: doc.id,
+                child: Text(
+                  data['fullName'] ?? 'Unknown',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Color(0xFF2D3142), fontSize: 14),
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedEmployeeId = value;
+              });
+            },
+          ),
         );
       },
     );
@@ -156,7 +333,11 @@ class _HRMonitorProgressPageState extends State<HRMonitorProgressPage> {
       stream: _getFilteredTargetsStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B9D)),
+            ),
+          );
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -164,11 +345,31 @@ class _HRMonitorProgressPageState extends State<HRMonitorProgressPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
+                Container(
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF8F9FA),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.inbox_rounded,
+                    size: 64,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Tidak ada target aktif',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF9CA3AF),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Target akan muncul di sini',
+                  style: TextStyle(fontSize: 13, color: Color(0xFFD1D5DB)),
                 ),
               ],
             ),
@@ -248,74 +449,101 @@ class TargetProgressCard extends StatelessWidget {
             (empSnapshot.data!.data() as Map<String, dynamic>?)?['fullName'] ??
             'Unknown';
 
-        return Card(
-          elevation: 3,
+        return Container(
           margin: const EdgeInsets.only(bottom: 16),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProgressDetailPage(
-                    targetId: targetId,
-                    targetData: targetData,
-                    employeeName: employeeName,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProgressDetailPage(
+                      targetId: targetId,
+                      targetData: targetData,
+                      employeeName: employeeName,
+                    ),
                   ),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.green[100],
-                        child: Text(
-                          employeeName.substring(0, 1).toUpperCase(),
-                          style: TextStyle(
-                            color: Colors.green[700],
-                            fontWeight: FontWeight.bold,
+                );
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Text(
+                              employeeName.substring(0, 1).toUpperCase(),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              employeeName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                employeeName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2D3142),
+                                ),
                               ),
-                            ),
-                            Text(
-                              targetData['title'] ?? 'No Title',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
+                              SizedBox(height: 4),
+                              Text(
+                                targetData['title'] ?? 'No Title',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF9CA3AF),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildProgressSection(),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildDeadlineInfo(),
-                      const Icon(Icons.chevron_right, color: Colors.grey),
-                    ],
-                  ),
-                ],
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFFFF6B9D),
+                          size: 24,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildProgressSection(),
+                    const SizedBox(height: 12),
+                    _buildDeadlineInfo(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -378,31 +606,31 @@ class TargetProgressCard extends StatelessWidget {
               : 0;
 
           if (percentage >= expectedPercentage * 0.9) {
-            statusColor = Colors.green;
+            statusColor = Color(0xFF4CAF50);
             statusText = 'ON TRACK';
-            statusIcon = Icons.check_circle;
+            statusIcon = Icons.check_circle_rounded;
           } else if (percentage >= expectedPercentage * 0.7) {
-            statusColor = Colors.orange;
+            statusColor = Color(0xFFFFB74D);
             statusText = 'PERLU PERHATIAN';
-            statusIcon = Icons.warning;
+            statusIcon = Icons.warning_rounded;
           } else {
-            statusColor = Colors.red;
+            statusColor = Color(0xFFEF5350);
             statusText = 'SANGAT LAMBAT';
-            statusIcon = Icons.error;
+            statusIcon = Icons.error_rounded;
           }
         } else {
-          statusColor = Colors.grey;
+          statusColor = Color(0xFF9CA3AF);
           statusText = 'N/A';
-          statusIcon = Icons.help;
+          statusIcon = Icons.help_rounded;
         }
 
         // Check if inactive (no input > 3 days)
         if (lastInputDate != null) {
           final daysSinceLastInput = now.difference(lastInputDate).inDays;
           if (daysSinceLastInput > 3) {
-            statusColor = Colors.grey;
+            statusColor = Color(0xFF9CA3AF);
             statusText = 'TIDAK AKTIF';
-            statusIcon = Icons.hourglass_empty;
+            statusIcon = Icons.hourglass_empty_rounded;
           }
         }
 
@@ -412,34 +640,52 @@ class TargetProgressCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '$totalProgress / $targetValue $unit',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Progress',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF9CA3AF),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '$totalProgress / $targetValue $unit',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D3142),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 4,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: statusColor, width: 1.5),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(statusIcon, size: 14, color: statusColor),
-                      const SizedBox(width: 4),
+                      Icon(statusIcon, size: 16, color: statusColor),
+                      const SizedBox(width: 6),
                       Text(
                         statusText,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: statusColor,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ],
@@ -447,13 +693,13 @@ class TargetProgressCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
                 value: percentage / 100,
-                minHeight: 10,
-                backgroundColor: Colors.grey[300],
+                minHeight: 8,
+                backgroundColor: Color(0xFFF0F0F0),
                 valueColor: AlwaysStoppedAnimation<Color>(statusColor),
               ),
             ),
@@ -461,19 +707,56 @@ class TargetProgressCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '${percentage.toStringAsFixed(1)}% tercapai',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFF6B9D).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${percentage.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFFF6B9D),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'tercapai',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                    ),
+                  ],
                 ),
                 if (lastInputDate != null)
-                  Text(
-                    'Terakhir: ${DateFormat('dd MMM, HH:mm').format(lastInputDate)}',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 12,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        DateFormat('dd MMM, HH:mm').format(lastInputDate),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    ],
                   )
                 else
                   Text(
                     'Belum ada input',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFFEF5350),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
               ],
             ),
@@ -492,25 +775,44 @@ class TargetProgressCard extends StatelessWidget {
 
     String text;
     Color color;
+    IconData icon;
 
     if (difference.isNegative) {
       text = 'Deadline lewat';
-      color = Colors.red;
+      color = Color(0xFFEF5350);
+      icon = Icons.event_busy_rounded;
     } else if (difference.inDays <= 3) {
       text = 'Deadline: ${difference.inDays} hari lagi';
-      color = Colors.orange;
+      color = Color(0xFFFFB74D);
+      icon = Icons.warning_rounded;
     } else {
       text = 'Deadline: ${DateFormat('dd MMM yyyy').format(deadline)}';
-      color = Colors.grey;
+      color = Color(0xFF4CAF50);
+      icon = Icons.event_available_rounded;
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.event, size: 14, color: color),
-        const SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 11, color: color)),
-      ],
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -537,9 +839,22 @@ class ProgressDetailPage extends StatelessWidget {
     final unit = targetData['unit'] ?? '';
 
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text('Progress: $employeeName'),
-        backgroundColor: Colors.green[700],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: Color(0xFF2D3142)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Progress: $employeeName',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -549,22 +864,55 @@ class ProgressDetailPage extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
-              color: Colors.green[700],
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    targetData['title'] ?? 'No Title',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Target: $targetValue $unit',
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.flag_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              targetData['title'] ?? 'No Title',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Target: $targetValue $unit',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

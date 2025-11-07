@@ -24,104 +24,254 @@ class HRDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Dashboard HR"),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Color(0xFFFF6B9D).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.dashboard_rounded,
+                color: Color(0xFFFF6B9D),
+                size: 24,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              'HR Dashboard',
+              style: TextStyle(
+                color: Color(0xFF2D3142),
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
         actions: [
-          // Ini tombol logout kita
           IconButton(
-            icon: Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () {
-              // Panggil fungsi logout saat ditekan
-              _logout(context);
-            },
+            icon: Icon(Icons.logout_rounded, color: Color(0xFFFF6B9D)),
+            onPressed: () => _logout(context),
           ),
+          SizedBox(width: 8),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ElevatedButton.icon(
-                icon: Icon(Icons.people),
-                label: Text('Kelola Akun Karyawan'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ManageEmployeesPage(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  textStyle: TextStyle(fontSize: 16),
-                ),
+      body: ListView(
+        padding: EdgeInsets.all(20),
+        children: [
+          // Welcome Section
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFF6B9D), Color(0xFFFF8FB3)],
               ),
-              SizedBox(height: 16), // Beri jarak
-              // TOMBOL BARU UNTUK MEMBUAT TARGET
-              ElevatedButton.icon(
-                icon: Icon(Icons.track_changes),
-                label: Text('Buat Target Kinerja'),
-                onPressed: () {
-                  // Navigasi ke halaman buat target
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CreateTargetPage(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  textStyle: TextStyle(fontSize: 16),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0xFFFF6B9D).withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: Offset(0, 5),
                 ),
-              ),
-              SizedBox(height: 16), // Beri jarak
-              // TOMBOL BARU UNTUK EVALUASI
-              ElevatedButton.icon(
-                icon: Icon(Icons.rate_review),
-                label: Text('Evaluasi Kinerja'),
-                onPressed: () {
-                  // Navigasi ke halaman daftar laporan masuk
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EvaluateSubmissionsPage(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  textStyle: TextStyle(fontSize: 16),
-                  backgroundColor:
-                      Colors.orange, // Beri warna berbeda agar menonjol
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Icon(
+                    Icons.shield_rounded,
+                    color: Colors.white,
+                    size: 35,
+                  ),
                 ),
-              ),
-              SizedBox(height: 16), // Beri jarak
-              // TOMBOL BARU UNTUK MONITOR PROGRESS
-              ElevatedButton.icon(
-                icon: Icon(Icons.analytics),
-                label: Text('Monitor Progress Karyawan'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HRMonitorProgressPage(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  textStyle: TextStyle(fontSize: 16),
-                  backgroundColor: Colors.green[700],
+                SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome Back!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Manage your team efficiently',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+
+          SizedBox(height: 25),
+
+          // Menu Grid
+          Text(
+            'Quick Actions',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3142),
+            ),
+          ),
+          SizedBox(height: 15),
+
+          _buildMenuCard(
+            context: context,
+            icon: Icons.people_alt_rounded,
+            title: 'Kelola Karyawan',
+            subtitle: 'Tambah & kelola akun karyawan',
+            color: Color(0xFFFF6B9D),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ManageEmployeesPage(),
+                ),
+              );
+            },
+          ),
+
+          SizedBox(height: 12),
+
+          _buildMenuCard(
+            context: context,
+            icon: Icons.track_changes_rounded,
+            title: 'Buat Target',
+            subtitle: 'Tetapkan target kinerja baru',
+            color: Color(0xFF8B5CF6),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateTargetPage(),
+                ),
+              );
+            },
+          ),
+
+          SizedBox(height: 12),
+
+          _buildMenuCard(
+            context: context,
+            icon: Icons.rate_review_rounded,
+            title: 'Evaluasi Kinerja',
+            subtitle: 'Tinjau & nilai laporan karyawan',
+            color: Color(0xFF10B981),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EvaluateSubmissionsPage(),
+                ),
+              );
+            },
+          ),
+
+          SizedBox(height: 12),
+
+          _buildMenuCard(
+            context: context,
+            icon: Icons.analytics_rounded,
+            title: 'Monitor Progress',
+            subtitle: 'Lihat perkembangan tim',
+            color: Color(0xFF3B82F6),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HRMonitorProgressPage(),
+                ),
+              );
+            },
+          ),
+
+          SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 28),
+            ),
+            SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3142),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Color(0xFFD1D5DB),
+              size: 18,
+            ),
+          ],
         ),
       ),
     );

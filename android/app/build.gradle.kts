@@ -20,7 +20,7 @@ dependencies {
 
 android {
     namespace = "com.example.sistem_kinerja"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34  // Update ke 34 untuk support android:attr/lStar
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -37,8 +37,8 @@ android {
         applicationId = "com.example.sistem_kinerja"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 23  // Update ke minimal 23 untuk support printing package
+        targetSdk = 34  // Update ke 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

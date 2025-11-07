@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // File ini di-generate otomatis
-import 'login_page.dart'; // Import halaman login yang akan kita buat
+import 'splash_screen.dart'; // Import splash screen
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
@@ -22,8 +22,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sistem Kinerja',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: LoginPage(), // Kita akan buat halaman ini selanjutnya
+      debugShowCheckedModeBanner: false, // Hilangkan banner DEBUG
+      theme: ThemeData(
+        primarySwatch: Colors.pink,
+        scaffoldBackgroundColor: Colors.white,
+        fontFamily: 'SF Pro Display',
+      ),
+      home: const SplashScreen(), // Start with splash screen
     );
   }
 }
